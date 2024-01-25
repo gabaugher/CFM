@@ -1,2 +1,2 @@
 # CFM
-CFM is a foundational mathematics tutorial program presenting content, practice problems, and assessment
+CFM is a foundational mathematics tutorial program to present content and to administer practice problems and assessment
