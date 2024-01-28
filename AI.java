@@ -9,7 +9,7 @@ import java.util.Scanner;
 
 public class AI {
 
-	static String origText, origValue, exp, messages = "";
+	static String origText, origValue, expression, messages = "";
 	static String[] answer = { "", "" };
 	static double enteredValue;
 	static Term[] overallExpr = new Term[9];
@@ -17,19 +17,27 @@ public class AI {
 
 public static class Term {  //  Creates a class for representing algebraic terms, each having a coefficient, a variable, and an exponent.
 	public double coeff; public char variable; public int expon;
-	public Term( int pos, double coef, char var, int expo )
-	{ this.coeff = coef; this.expon = expo; this.variable = var; }
+	public Term( int pos, double coef, char var, int expo )	{
+		this.coeff = coef; 
+		this.expon = expo; 
+		this.variable = var; }
 	public double getCoeff() { return coeff; }
 	public char getVar() { return variable; }
 	public int getExpon() { return expon; }
 	public void setCoeff(double coef) { coeff = coef; }
 	public void setVar(char var) { variable = var; }
 	public void setExpon(int expo) { expon = expo; }  
-	public Term() { coeff = 0; variable = ' '; expon = 0; };
+	public Term() { 
+		coeff = 0; 
+		variable = ' '; 
+		expon = 0; };
 }
 
 public static Term initTerm( ) {   // Used several places to initialize expressions (set terms to have 0 for coefficient & exponent, ' ' for variable)
-	Term term = new Term(); term.setCoeff(0.0); term.setVar(' '); term.setExpon(0);
+	Term term = new Term(); 
+	term.setCoeff(0.0); 
+	term.setVar(' '); 
+	term.setExpon(0);
 	return term;
 }
 
@@ -39,22 +47,28 @@ public static int numUsedTerms( Term[] terms ) {   //  Used several places to de
 	return num;
 }
 
-public static String elimOrAddSigns( String exp) {  // Eliminates initial plus signs or terminal signs in an expression and also adds 1's before variables
- int i, len, count;
+public static String elimOrAddSigns( String expression) {  // Eliminates initial plus signs or terminal signs in an expression and also adds 1's before variables
+ int i, len = expression.length(), count = 0;
  char ch;
- len = exp.length(); count = 0;
- if (exp.compareTo("+") == 0) { exp = ""; len = 0; messages += "Incorrect expression: no algebra terms or numbers in expression/equation. "; };
+ if (expression.compareTo("+") == 0) { 
+	 expression = ""; 
+	 len = 0; 
+	 messages += "Error - incorrect expression: no algebra terms or numbers in expression/equation. "; 
+	 };
  while ((len > 1) && (count < len)) {
-	 len = exp.length(); count+=2;
-	 if ((exp.charAt(len-1) == '+') || (exp.charAt(len-1) == '-')) exp = exp.substring(0,len-1);  
-	 if (exp.charAt(0) == '+')  exp = exp.substring(1); };
-	 ch = exp.charAt(0); if (Character.isLetter(ch)) exp = "1" + exp;
-	 len = exp.length();
+	 // System.out.println( "len:  " + len + "  count:  " + count ); 
+	 len = expression.length(); 
+	 count+=2;
+	 if ((expression.charAt(len-1) == '+') || (expression.charAt(len-1) == '-')) expression = expression.substring(0,len-1);  
+	 if (expression.charAt(0) == '+')  expression = expression.substring(1); };
+	 ch = expression.charAt(0); 
+	 if (Character.isLetter(ch)) expression = "1" + expression;
+	 len = expression.length();
 	 for ( i = 0; i < len - 2; i++ ) {
-	 	ch = exp.charAt(i);
+	 	ch = expression.charAt(i);
 	 	if ((( ch == '+') || (ch == '-')) || ((ch == '(') || (ch == ')')) )
-	 		if (Character.isLetter( exp.charAt(i+1) )) exp = exp.substring(0,i+1) + "1" + exp.substring(i+1); };
-	 return exp;
+	 		if (Character.isLetter( expression.charAt(i+1) )) expression = expression.substring(0,i+1) + "1" + expression.substring(i+1); };
+	 return expression;
 }
 
 public static String prepareExpOrEq( String origText ) {  //  Prepares the string in various ways, detects unwanted characters, determines if equation, etc.
@@ -62,17 +76,20 @@ public static String prepareExpOrEq( String origText ) {  //  Prepares the strin
 	String twoChar, tempString, leftSide, rightSide; int i, j, count, location, len; char ch; boolean ok;
 	
 	// Remove any spaces and switch upper to lower case letters
-	exp = origText.trim(); 
-	while (exp.indexOf(' ') != -1) {
-		for(i=0;i<exp.length();i++) 
-			{if (exp.charAt(i)==' ') { exp = exp.substring(0,i) + exp.substring(i+1); } } };
-	exp = exp.toLowerCase();
+	expression = origText.trim(); 
+	while (expression.indexOf(' ') != -1) {
+		for(i=0;i<expression.length();i++) 
+			{if (expression.charAt(i)==' ') {
+				expression = expression.substring(0,i) + expression.substring(i+1); } } 
+		};
+	expression = expression.toLowerCase();
+	System.out.println( "After removing spaces and conversion to lower case: " +  expression ); 
 	
 	// Detect characters other than numbers, letters, operation signs, equal signs, and parentheses or brackets.
-	len = exp.length(); i = 0;
+	len = expression.length(); i = 0;
 	if (len > 0)
 		while ( i < len-1 ) {
-			ok = false; ch = exp.charAt(i);
+			ok = false; ch = expression.charAt(i);
 			if (Character.isDigit(ch)) ok = true;  
 			if (Character.isLetter(ch)) ok = true; 
 			if (ch == '=') ok = true;
@@ -82,48 +99,62 @@ public static String prepareExpOrEq( String origText ) {  //  Prepares the strin
 			if ((ch == '[') || (ch == ']')) ok = true;
 			if ((ch == '{') || (ch == '}')) ok = true; 
 			if ((ch == '^') || (ch == '.')) ok = true;
-			if (!ok) { messages += "Expression has an unacceptable character: " + ch + " (character removed). "; 
-			exp = exp.substring(0,i) + exp.substring(i+1); };
+			if (!ok) { messages += "Error - expression has an unacceptable character: " + ch + " (character removed). "; 
+			expression = expression.substring(0,i) + expression.substring(i+1); };
 			i++; };
-
+	System.out.println( "After removal of unacceptable characters: " + expression );  
+			
 	// Change ++ to +, +- to -, -+ to -, and -- to +, if any of these are in the string
-	count = 0; tempString = exp;
-	while (count < exp.length()) {
-		for ( j = 0; j < exp.length() - 1; j++ ) {
-			twoChar = exp.substring(j,j+2); ch = '#';
+	count = 0; 
+	tempString = expression;
+	while (count < expression.length()) {
+		for ( j = 0; j < expression.length() - 1; j++ ) {
+			twoChar = expression.substring(j,j+2); 
+			ch = '#';
 			if (twoChar.compareTo("++") == 0) 
 				{ ch = '+'; messages += "Double plus signs should be changed to + only. "; };
 			if ((twoChar.compareTo("+-") == 0) || (twoChar.compareTo("-+") == 0)) 
 				{ ch = '-'; messages += "+- or -+ should be changed to - only. "; };
 			if (twoChar.compareTo("--") == 0) 
 				{ ch = '+'; messages += "Double minus signs should be changed to a + sign. "; };
-			if (ch != '#') exp = exp.substring(0,j) + ch + exp.substring(j+2);
+			if (ch != '#') expression = expression.substring(0,j) + ch + expression.substring(j+2);
 		};	
 		count++; 
-		if (tempString.compareTo(exp) == 0) count = 999; tempString = exp; };
+		if (tempString.compareTo(expression) == 0) count = 999; 
+		tempString = expression; };
 		
 		// Eliminate initial plus signs or terminal signs in the whole expression or add 1's before variables if no coefficient
-		exp = elimOrAddSigns( exp );
+		expression = elimOrAddSigns( expression );
+		System.out.println( "After dealing with signs: " + expression ); 
 		
 	// Determine if there are equal signs (and if more than one) and if one, divide the string into left and right side expressions
-	count = 0; location = 0; equation = false; leftSide = ""; rightSide = "";
-	for (i=0; i < exp.length(); i++ )  { 
-		if ( exp.charAt(i) == '=' ) {count++; location = i; };	};
+	count = 0; 
+	location = 0; 
+	equation = false; 
+	leftSide = ""; 
+	rightSide = "";
+	for (i=0; i < expression.length(); i++ )  { 
+		if ( expression.charAt(i) == '=' ) {
+			count++; location = i; };	
+			};
 	equation = (count == 1);
-	if (count > 1) { messages += "Incorrect expression: multiple equal signs. "; }  
-	if (equation) { leftSide = exp.substring(0,location); rightSide = exp.substring(location+1); }
+	if (count > 1) { messages += "Error - incorrect expression: multiple equal signs. "; }  
+	if (equation) { 
+		leftSide = expression.substring(0,location); 
+		rightSide = expression.substring(location+1); 
+		}
 	if (equation) System.out.println("Left Side: " + leftSide + "  Right Side: " + rightSide );
 
 	// If equation, eliminate initial plus signs or terminal signs in leftSide or rightSide expressions
 	if (equation) {
 		leftSide = elimOrAddSigns( leftSide );  
 		rightSide = elimOrAddSigns( rightSide );
-		exp = leftSide + '=' + rightSide;
+		expression = leftSide + '=' + rightSide;
 		};
 
-	// System.out.print("Prepped "); if (equation) System.out.println("equation: " + exp); else System.out.println( "expression: " + exp);
+	// System.out.print("Prepped "); if (equation) System.out.println("equation: " + expression); else System.out.println( "expression: " + expression);
 	// System.out.println("Messages: " + messages);
-	return exp;
+	return expression;
 } // end of prepareExpOrEq
 
 public static Term[] determineExpr( String origExpr, int beginPos, int endPos) {  // Analyzes the string character by character and converts to an array of Terms
@@ -134,13 +165,17 @@ public static Term[] determineExpr( String origExpr, int beginPos, int endPos) {
 	int pos[] = new int[9]; 
 	double coeff[] = new double[9]; 
 	char variable[] = new char[9]; int expon[] = new int[9];
-	for ( index = 0; index < 9; index++ ) 
-		{ pos[index] = 0; coeff[index] = 0; variable[index] = ' '; expon[index] = 0; };
+	for ( index = 0; index < 9; index++ ) {
+		pos[index] = 0; 
+		coeff[index] = 0; 
+		variable[index] = ' '; 
+		expon[index] = 0; };
 	Term[] expression = new Term[9]; 
 	for (i = 0; i < 9; i++ ) { expression[i] = initTerm( ); };
 	
 	// System.out.println( "beginPos: " + beginPos + "  endPos: " + endPos);
-	i = beginPos; ch = origExpr.charAt(i);  
+	i = beginPos; 
+	ch = origExpr.charAt(i);  
 	if ((ch == '+') || ( ch == '-')) 
 		{ if (ch == '-') signMultiplier = -1; i++; };
 	while ( i < endPos ) {
@@ -187,10 +222,9 @@ public static void displayExpr( Term[] expr ) { //  Used various places where ex
 public static String convertToStr( Term[] expr ) {  //  Used several places to convert an expression (array of terms) into a string
 	int i, numOfTerms;
 	String newExpr = "";
-	
 	numOfTerms = numUsedTerms( expr );
 	for (i=0; i<numOfTerms; i++) {	// Build new expression after distributing
-		if ( expr[i].expon == 0 ) { newExpr += Double.toString( expr[i].coeff ); }
+		if ( expr[i].expon == 0 ) {	newExpr += Double.toString( expr[i].coeff ); }
 			else { newExpr += Double.toString( expr[i].coeff ) + expr[i].variable + "^" + Integer.toString((int) expr[i].expon ); }
 		if ( i < numOfTerms - 1) newExpr += " + "; 
 		}
@@ -282,15 +316,13 @@ public static Term[] combineLikeTerms( Term[] inputExpr) {  // Starting with the
 		return outputExpr;
 }   // End of combineLikeTerms
 
-public static Term[] simpSinglePar( String exp )  {  // Handles when the expression has one set of parentheses
-
-	//  A Possible Test Expression:  3x+-5(3x-6+4x^2-5x-7)2-5
+public static Term[] simpSinglePar( String expression )  {  // Handles when the expression has one set of parentheses
 	
 	int i, j, k, m = 0, n = 0, posOpenPar1, posClosePar1;
 	String newExpr = "", beginStr = "", endStr = ""; 
 	boolean parError = false, endMultiplier = false;  
-	Term[] expression = new Term[9]; 
-	for (i = 0; i < 9; i++ ) { expression[i] = initTerm( ); };
+	Term[] expressionList = new Term[9]; 
+	for (i = 0; i < 9; i++ ) { expressionList[i] = initTerm( ); };
 	Term[] nestExpr = new Term[9]; 
 	for (i = 0; i < 9; i++ ) { nestExpr[i] = initTerm( ); };
 	Term[] multiplierTerm = new Term[9]; 
@@ -298,25 +330,32 @@ public static Term[] simpSinglePar( String exp )  {  // Handles when the express
 	Term[] resultExpr = new Term[9]; 
 	for (i = 0; i < 9; i++ ) { resultExpr[i] = initTerm( ); };
 	
-	posOpenPar1 = exp.indexOf( '(' ); posClosePar1 = exp.indexOf( ')' );
-	if (posClosePar1 < posOpenPar1) { System.out.println( "Error: closing parentheses before opening parentheses."); parError = true; };
+	posOpenPar1 = expression.indexOf( '(' ); posClosePar1 = expression.indexOf( ')' );
+	if (posClosePar1 < posOpenPar1) { 
+		System.out.println( "Error: closing parentheses before opening parentheses."); 
+		parError = true; 
+		};
 	
 	// Process parentheses except for any term after the parentheses
 	k = posOpenPar1; 
-	i = exp.lastIndexOf('+', k); 
-	j = exp.lastIndexOf('-', k);
-	if ((i!=-1)||(j!=-1)) { k = Math.max(i, j); multiplierTerm = determineExpr( exp, k, posOpenPar1); }
-	else { multiplierTerm = determineExpr( exp, 0, k); k = 0; };
+	i = expression.lastIndexOf('+', k); 
+	j = expression.lastIndexOf('-', k);
+	if ((i!=-1)||(j!=-1)) { 
+		k = Math.max(i, j); 
+		multiplierTerm = determineExpr( expression, k, posOpenPar1); }
+	else { multiplierTerm = determineExpr( expression, 0, k); 
+		k = 0; 
+		};
 
-	if (k != 0) beginStr = exp.substring(0,k) + "+";
-	nestExpr = determineExpr( exp, posOpenPar1+1, posClosePar1 );
+	if (k != 0) beginStr = expression.substring(0,k) + "+";
+	nestExpr = determineExpr( expression, posOpenPar1+1, posClosePar1 );
 	if ((numUsedTerms(multiplierTerm) == 1) && (multiplierTerm[0].coeff != 0)) 
 		resultExpr = distributeMonomial( multiplierTerm, nestExpr);
 	
 	// Determine any final term to distribute and distribute it
-	if (posClosePar1 < exp.length()-1) {
-		i = exp.indexOf('+',posClosePar1); 
-		j = exp.indexOf('-',posClosePar1); 
+	if (posClosePar1 < expression.length()-1) {
+		i = expression.indexOf('+',posClosePar1); 
+		j = expression.indexOf('-',posClosePar1); 
 		m = posClosePar1;
 		if (i!=-1) m = i;
 		if (j!=-1) { 
@@ -324,30 +363,30 @@ public static Term[] simpSinglePar( String exp )  {  // Handles when the express
 			if (i!=-1) m = Math.min( m, n ); 
 				else m = j; };
 		if (( i == -1 ) && ( j == -1 )) { 
-			multiplierTerm = determineExpr( exp, posClosePar1+1, exp.length() ); 
+			multiplierTerm = determineExpr( expression, posClosePar1+1, expression.length() ); 
 			endMultiplier = true; 
 			endStr = ""; 
 			}
-			else { 	multiplierTerm = determineExpr( exp, posClosePar1+1, m); 
+			else { 	multiplierTerm = determineExpr( expression, posClosePar1+1, m); 
 			endMultiplier = true;
-			if (m>posClosePar1) endStr = "+" + exp.substring( m ); 
-				else endStr = "+" + exp.substring(m+1); };
+			if (m>posClosePar1) endStr = "+" + expression.substring( m ); 
+				else endStr = "+" + expression.substring(m+1); };
 			if (endMultiplier) if ((numUsedTerms(multiplierTerm) == 1) && (multiplierTerm[0].coeff != 0))
 				{ resultExpr = distributeMonomial( multiplierTerm, resultExpr); };
 		};
 		
 	// Combine all parts and prepare expression and combine like terms
 	newExpr = convertToStr( resultExpr );
-	exp = beginStr + newExpr + endStr;
-	exp = prepareExpOrEq( exp );
+	expression = beginStr + newExpr + endStr;
+	expression = prepareExpOrEq( expression );
 	
-	System.out.println( "After distributing: " + exp );
+	System.out.println( "After distributing: " + expression );
 	
-	expression = determineExpr( exp, 0, exp.length() );
-	expression = combineLikeTerms ( expression );
+	expressionList = determineExpr( expression, 0, expression.length() );
+	expressionList = combineLikeTerms ( expressionList );
 	if (parError) System.out.println( "Incorrect entry. Try again." );  
 	
-	return expression;
+	return expressionList;
 }  // end of simpSinglePar
 
 public static Term[] addTwoExpressions( Term[] exp1, Term[] exp2 )  {  // Adds two expressions (arrays of terms)
@@ -375,11 +414,9 @@ public static Term[] addTwoExpressions( Term[] exp1, Term[] exp2 )  {  // Adds t
 	return expression;
 }
  
-public static Term[] simpDoublePar( String exp )  {  //  Handles when the expression has two sets of parentheses by use of simpSinglePar twice
+public static Term[] simpDoublePar( String origExpression )  {  //  Handles when the expression has two sets of parentheses by use of simpSinglePar twice
 	
-	//  A Possible Test Expression:  3x+1x(3x-6+4)+5-(2x^2-5x-7)-5--7x
-	
-	int i, j, k, posOpenPar1 = -1, posOpenPar2 = -1, posClosePar1 = -1;
+	int i, j, k, posOpenPar1 = -1, posOpenPar2 = -1, posOpenPar3 = -1, posOpenPar4 = -1, posClosePar1 = -1, posClosePar2 = -1;
 	String beginExpr = "", endExpr = ""; 
 	boolean parError = false; 
 	char ch;
@@ -390,32 +427,43 @@ public static Term[] simpDoublePar( String exp )  {  //  Handles when the expres
 	Term[] expression = new Term[9]; 
 	for (i = 0; i < 9; i++ ) { expression[i] = initTerm( ); };
 
-	for ( i = 0; i < exp.length(); i++ ) {
-		ch = exp.charAt(i);
-		if ((ch == '(') && (posOpenPar1 == -1)) { posOpenPar1 = i; };
-		if ((ch == '(') && ((posOpenPar1 != -1) && (posOpenPar1 != i))) { posOpenPar2 = i; };
+	for ( i = 0; i < origExpression.length(); i++ ) {
+		ch = origExpression.charAt(i);
+		if (ch == '(')  { 
+			if (posOpenPar1 == -1) { posOpenPar1 = i; }
+			else if (posOpenPar2 == -1) { posOpenPar2 = i; }
+				 else if (posOpenPar3 == -1) { posOpenPar3 = i; }
+				      else if (posOpenPar4 == -1) { posOpenPar4 = i; } 
+			}
 		};
-	j = exp.indexOf(')'); 
+	System.out.println( "posOpenPar1: " + posOpenPar1 + "  posOpenPar2: " + posOpenPar2 + "  posOpenPar1: " + posOpenPar3 + "  posOpenPar2: " + posOpenPar4 ); 
+		
+	j = origExpression.indexOf(')'); 
 	if (j != -1) {
 		if (j < posOpenPar1) { 
 			System.out.println( "Error: closing parentheses before opening parentheses."); 
 			parError = true; } 
 		else { posClosePar1 = j; }; }
-	j = exp.indexOf(')',j+1); 
+	
+	j = origExpression.indexOf(')',j+2); 
 	if (j != -1) {
 		if ((j < posOpenPar2) || (j < posOpenPar1)) { 
 			System.out.println( "Error: closing parentheses before opening parentheses."); 
 			parError = true; 
-			}; 
+			}
+			else posClosePar2 = j;
 		}
-	i = exp.indexOf( '+', posClosePar1 ); 
-	j = exp.indexOf( '-', posClosePar1 ); 
+	System.out.println( "posClosePar1: " + posClosePar1 + "  posClosePar2: " + posClosePar2 ); 
+	i = origExpression.indexOf( '+', posClosePar1 ); 
+	j = origExpression.indexOf( '-', posClosePar1 ); 
 	k = posClosePar1+1;
 	if ((i!=-1) && (i<posOpenPar2)) { k = i; }; 
 	if ((j!=-1) && (j<posOpenPar2)) { k = j; };
 	
-	beginExpr = exp.substring(0,k); firstExpr = simpSinglePar( beginExpr );	
-	endExpr = exp.substring(k); secondExpr = simpSinglePar( endExpr );
+	beginExpr = origExpression.substring(0,k); 
+	firstExpr = simpSinglePar( beginExpr );	
+	endExpr = origExpression.substring(k); 
+	secondExpr = simpSinglePar( endExpr );
 	
 	System.out.println( "Expression: " + convertToStr( firstExpr ) + " + " + convertToStr( secondExpr ) );
 	
@@ -427,8 +475,6 @@ public static Term[] simpDoublePar( String exp )  {  //  Handles when the expres
 }  //  End of simpDoublePar
 
 public static Term[] simpNestExpr( String exp )  {  //  Handles expressions with one set of parentheses inside another set of parentheses
-	
-	//  A Possible Test Expression:  3x+1x(3x-6+4(2x^2-5x-7)-5)-7x
 	
 	int i, j, posOpenPar1 = -1, posOpenPar2 = -1, posClosePar2 = -1;
 	String newExpr = ""; 
@@ -482,8 +528,6 @@ public static Term[] simpNestExpr( String exp )  {  //  Handles expressions with
 
 public static Term[] simpAdjacParExpr( String exp )  {  //  Handles expressions with two parentheses adjacent to each other (where they must be multiplied)
 
-	//  A Possible Test Expression:  3x+1x(3x-6+4)(2x^2-5x-7)-5-7x
-	
 	int i, j, k = 0, m, len, endLen, posOpenPar1 = -1, posOpenPar2 = -1, posClosePar1 = -1, posClosePar2 = -1, numOfTerms1, numOfTerms2;
 	double multiplier = 1; 
 	String beginStr = "", endStr = "";
@@ -504,7 +548,8 @@ public static Term[] simpAdjacParExpr( String exp )  {  //  Handles expressions 
 	Term[] endMultiplierTerm = new Term[9]; 
 	endMultiplierTerm = expression;
 
-	exp = prepareExpOrEq( exp ); len = exp.length();
+	exp = prepareExpOrEq( exp ); 
+	len = exp.length();
 	for ( i = 0; i < len; i++ ) {
 		ch = exp.charAt(i); 
 		if ((ch == '(') && (posOpenPar1 == -1)) { posOpenPar1 = i; }
@@ -670,7 +715,7 @@ public static Term[] simplifyExpr( String exp ) {  //  The main component to dis
 		if ((j < posOpenPar2) || (j < posOpenPar1)) { System.out.println( "Error: closing parentheses before opening parentheses."); parError = true; }
 			else { posClosePar2 = j; };
 
-	if ((exp.indexOf('(')==-1)&&(exp.indexOf(')')==-1)) noPar = true;
+	if ((exp.indexOf('(')==-1) && (exp.indexOf(')')==-1)) noPar = true;
 		else if ((posOpenPar2 == -1) && (posClosePar2 == -1)) singlePar = true;
 	if (( posOpenPar2 != -1) && (posClosePar1 != -1))
 		if (posOpenPar2 < posClosePar1) nestedPar = true;
@@ -681,10 +726,13 @@ public static Term[] simplifyExpr( String exp ) {  //  The main component to dis
 	
 	// Place a 1 in front of parentheses when parentheses are added or subtracted
 	if (posOpenPar1 != -1) {
-		i = exp.lastIndexOf('+',posOpenPar1); j = exp.lastIndexOf('-',posOpenPar1); k = posOpenPar1;
+		i = exp.lastIndexOf('+',posOpenPar1); 
+		j = exp.lastIndexOf('-',posOpenPar1); 
+		k = posOpenPar1;
 		if ((k==i) || (k==j)) { 
 			exp = exp.substring(0,k+1) + "1" + exp.substring(k+1);
-			posOpenPar1++;  posClosePar1++;  
+			posOpenPar1++;  
+			posClosePar1++;  
 			if (posOpenPar2 != -1) { posOpenPar2++; posClosePar2++; }
 			};
 	};
@@ -694,7 +742,8 @@ public static Term[] simplifyExpr( String exp ) {  //  The main component to dis
 		k = posOpenPar2-1;
 		if ((k==i) || (k==j)) { 
 			exp = exp.substring(0,k+1) + "1" + exp.substring(k+1);
-			posOpenPar2++; posClosePar2++; 
+			posOpenPar2++; p
+			osClosePar2++; 
 			if ( posClosePar1 > posOpenPar2 ) posClosePar1++;  
 		};
 	};
@@ -806,7 +855,7 @@ public static String[] solveEq( String equation ) {  // Once equation is simplif
 }  // End of solveEq
 
 public static void main(String[] args) {
-
+	
 	// Input original expression
 	System.out.println("Enter your expression or equation: (only one variable & up to 2 sets of parentheses allowed)");
 	Scanner sc = new Scanner( System.in );
@@ -815,9 +864,12 @@ public static void main(String[] args) {
 
 	// The method prepareExpOrEq removes spaces, double signs, leading or trailing unnecessary signs, detects unacceptable characters, etc. and determines
 	// whether or not the inputed string is an equation
-	exp = prepareExpOrEq( origText );  
+	expression = prepareExpOrEq( origText ); 
+	System.out.println( "After prepareExpOrEq: " + expression ); 
 	
-	if (!equation) overallExpr = simplifyExpr(exp);   // Uses various methods to simplify the expression (distributing, combining like terms, etc.)
+	if (!equation) overallExpr = simplifyExpr(expression);   // Uses various methods to simplify the expression (distributing, combining like terms, etc.)
+	System.out.println( "After simplifying expression: "); 
+	displayExpr( overallExpr );
 	
 	if (!equation) {  //  After simplifying the expression, this section evaluates the expression for an inputed value of the variable.
 		System.out.println( "\nExpression Evaluator: Enter a value for the variable: \n" );
@@ -828,9 +880,9 @@ public static void main(String[] args) {
 		System.out.println( "The expression evalutes to the answer " + evaluateExpr( overallExpr, enteredValue )); }
 	
 	if (equation) {
-		exp = simpEquation( exp );  // simpEquation uses simplifyExpr to simplify both sides separately then combine all terms on the left side
-		System.out.println( "Simplified and combined equation: " + exp );
-		answer = solveEq( exp );   // solveEq distinguishes the degree of the equation and solves it accordingly (up to degree 2)
+		expression = simpEquation( expression );  // simpEquation uses simplifyExpr to simplify both sides separately then combine all terms on the left side
+		System.out.println( "Simplified and combined equation: " + expression );
+		answer = solveEq( expression );   // solveEq distinguishes the degree of the equation and solves it accordingly (up to degree 2)
 		System.out.print( "Solution Set: { " ); 
 		System.out.print( answer[0]);
 		if (answer[1]!="") { System.out.print(", " + answer[1] + " }"); } 
