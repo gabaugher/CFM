@@ -769,7 +769,7 @@ public static Term[] simplifyExpr( String exp ) {  //  The main component to dis
 
 	expression = roundCoeffs( expression );
 	
-	System.out.print( "Final Simplified Expression: "); displayExpr( expression );
+	System.out.print( "\nFinal Simplified Expression: "); displayExpr( expression );
 	if (parError) System.out.println( "Incorrect entry. Try again." );  
 	return expression;
 }   // End of simplifyExpr
@@ -792,9 +792,9 @@ public static String simpEquation( String eqStr ) {  // Converts left & right si
 	Term[] leftExpr = new Term[9]; 
 	for (i = 0; i < 9; i++ ) { leftExpr[i].initTerm( ); };
 	Term[] rightExpr = new Term[9]; 
-	for (i = 0; i < 9; i++ ) { rightExpr[i].initTerm( ); };
+	rightExpr = leftExpr;
 	Term[] combinedExpr = new Term[9]; 
-	for (i = 0; i < 9; i++ ) { combinedExpr[i].initTerm( ); };
+	combinedExpr = leftExpr; 
 	Term[] negOne = new Term[9]; 
 	negOne = determineExpr( negOneStr, 0, 2);
 	
@@ -807,7 +807,7 @@ public static String simpEquation( String eqStr ) {  // Converts left & right si
 	rightExpr = simplifyExpr( rightSide );
 	System.out.println( "left: " + leftSide + "  right: " + rightSide);
 	
-	combinedExpr = addTwoExpressions( leftExpr, distributeMonomial( negOne, rightExpr ));
+	combinedExpr = addTwoExpressions( leftExpr, distributeMonomial( negOne, rightExpr ) );
 	System.out.print( "Combined Sides: "); 
 	displayExpr( combinedExpr );  
 	
@@ -832,7 +832,6 @@ public static String[] solveEq( String equation ) {  // Once equation is simplif
 	degree = 0; 
 	for (i=0; i<9; i++) { 
 		if (expression[i].expon > degree) degree = expression[i].expon; };
-	
 	if (degree == 0) { 
 		if (expression[0].coeff == 0) ans[0] = "All real numbers"; 
 			else ans[0] = "No solutions"; };
@@ -847,15 +846,92 @@ public static String[] solveEq( String equation ) {  // Once equation is simplif
 			ans[0]=String.valueOf((-1*a[1]+Math.sqrt(a[1]*a[1]-4*a[2]*a[0]))/(2*a[2])); 
 			ans[1]=String.valueOf((-1*a[1]-Math.sqrt(a[1]*a[1]-4*a[2]*a[0]))/(2*a[2])); }
 			else ans[0] = "No solution in the real numbers.";
-		};
+			};
 	if (degree > 2) ans[0] = "This program only solves equations up to degree 2.";
 	return ans;
-	
+	 
 }  // End of solveEq
+
+public static void AITest() {
+	
+	boolean passed, allPassed = true; 
+	int i;
+	String origExpr;
+	Term[] exprTerms = new Term[9];	
+	for (i = 0; i < 9; i++ ) { exprTerms[i].initTerm( ); };
+	
+	// Single Parentheses
+	passed = false; 
+	String str1 = "3x+-5(3x-6+4x^2-5x-7)2-5-", ans1 = "-40x^2+23x+125"; 
+	origExpr = AI.prepareExpOrEq(str1);
+	exprTerms = AI.simplifyExpr( origExpr );
+	if ( AI.convertToStr( exprTerms ).compareTo( ans1 ) == 0) { passed = true; }
+	else { allPassed = false; };
+	System.out.println( "Single Parentheses Test passed? " + passed );
+	
+	// Double Parentheses
+	passed = false;
+	String str2 = "3x+1x(3x-6+4)+5-(2x^2-5x-7)-5--7x", ans2 = "x^2+13x+7";
+	origExpr = AI.prepareExpOrEq(str2);
+	exprTerms = AI.simplifyExpr( origExpr );
+	if ( AI.convertToStr( exprTerms ).compareTo( ans2 ) == 0) { passed = true; }
+	else { allPassed = false; };
+	System.out.println( "Double Parentheses Test passed? " + passed );
+	
+	// Nested Parentheses
+	passed = false;
+	String str3 = "-3x+x(3x-6+4(2x^2-5x-7)--5)-7x", ans3 = "8x^3–17x^2–39x";
+	origExpr = AI.prepareExpOrEq( str3 );
+	exprTerms = AI.simplifyExpr( origExpr );
+	if ( AI.convertToStr( exprTerms ).compareTo( ans3 ) == 0) { passed = true; }
+	else { allPassed = false; };
+	System.out.println( "Nested Parentheses Test passed? " + passed );
+	
+	// Adjacent Parentheses
+	passed = false;
+	String str4 = "--3x+1x(3x-6+4)(2x^2-5x-7)-5-7x", ans4 = "6x^4–19x^3–11x^2+10x–5";
+	origExpr = AI.prepareExpOrEq( str4 );
+	exprTerms = AI.simplifyExpr( origExpr );
+	if ( AI.convertToStr( exprTerms ).compareTo( ans4 ) == 0) { passed = true; }
+	else { allPassed = false; };
+	System.out.println( "Adjacent Parentheses Test passed? " + passed );
+	
+	// Double Parentheses with Adjacent
+	passed = false;
+	String str5 = "2 - 3x( 4x^2 - 5x ) - 5( x + 2 )( 6x - 9 )", ans5 = "-12x^3-15x^2-15x+92";
+	origExpr = AI.prepareExpOrEq( str5 );
+	exprTerms = AI.simplifyExpr( origExpr );
+	if ( AI.convertToStr( exprTerms ).compareTo( ans5 ) == 0) { passed = true; }
+	else { allPassed = false; };
+	System.out.println( "Double Parentheses With Adjacent Test passed? " + passed );
+	
+	// Linear Equation
+	passed = false;
+	String str6 = "-3( 2x – 5 ) –7( x + 4 ) = 5( -3x – 2 ) + 9", ans6 = "3/7";
+	origExpr = AI.prepareExpOrEq( str6 );
+	exprTerms = AI.simplifyExpr( origExpr );
+	if ( AI.convertToStr( exprTerms ).compareTo( ans6 ) == 0) { passed = true; }
+	else { allPassed = false; };
+	System.out.println( "Linear Equation Test passed? " + passed );
+	
+	// Quadratic Equation
+	passed = false;
+	String str7 = "3x( 2x – 5 ) – 7( x^2 + 4x - 3 ) = -5x( 3x – 2 ) + 9x^2", ans7 = "7.152,0.4195";
+	origExpr = AI.prepareExpOrEq( str7 );
+	exprTerms = AI.simplifyExpr( origExpr );
+	if ( AI.convertToStr( exprTerms ).compareTo( ans7 ) == 0) { passed = true; }
+	else { allPassed = false; };
+	System.out.println( "Quadratic Equation Test passed? " + passed );
+	
+	System.out.println( "All Tests Passed? " + allPassed );
+	}	
 
 public static void main(String[] args) {
 	
-	// Input original expression
+	AI aiRun = new AI(); 
+	aiRun.AITest(); 
+	
+	/* Input original expression
 	System.out.println("Enter your expression or equation: (only one variable & up to 2 sets of parentheses allowed)");
 	Scanner sc = new Scanner( System.in );
 	try { origText = sc.nextLine(); }
@@ -876,7 +952,7 @@ public static void main(String[] args) {
 		catch (Exception e) { e.printStackTrace(); }
 		finally { sc.close(); }
 		enteredValue = Double.valueOf( origValue );
-		System.out.println( "The expression evalutes to the answer " + evaluateExpr( overallExpr, enteredValue )); }
+		System.out.println( "The expression evaluates to the answer " + evaluateExpr( overallExpr, enteredValue )); }
 	
 	if (equation) {
 		expression = simpEquation( expression );  // simpEquation uses simplifyExpr to simplify both sides separately then combine all terms on the left side
@@ -887,5 +963,6 @@ public static void main(String[] args) {
 		if (answer[1]!="") { System.out.print(", " + answer[1] + " }"); } 
 			else { System.out.println( " }" ); };
 		};
-	}
+	*/
+	} 
 }
