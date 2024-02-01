@@ -1,0 +1,90 @@
+package Test;
+
+import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.Test;
+
+import cfm_files.AI;
+import cfm_files.AI.Term;
+
+class AITest {
+	
+	boolean passed, allPassed = true; 
+	int i;
+	String origExpr;
+	Term[] exprTerms = new Term[9];	
+	
+	{	
+		for (i = 0; i < 9; i++ ) { exprTerms[i].initTerm( ); };
+		
+		// Single Parentheses
+		passed = false; 
+		String str1 = "3x+-5(3x-6+4x^2-5x-7)2-5-", ans1 = "-40x^2+23x+125"; 
+		origExpr = AI.prepareExpOrEq(str1);
+		exprTerms = AI.simplifyExpr( str1 );
+		if ( AI.convertToStr( exprTerms ).compareTo( ans1 ) == 0) { passed = true; }
+		else { allPassed = false; };
+		System.out.println( "Single Parentheses Test passed? " + passed );
+		
+		// Double Parentheses
+		passed = false;
+		String str2 = "3x+1x(3x-6+4)+5-(2x^2-5x-7)-5--7x", ans2 = "x^2+13x+7";
+		origExpr = AI.prepareExpOrEq(str2);
+		exprTerms = AI.simplifyExpr( str2 );
+		if ( AI.convertToStr( exprTerms ).compareTo( ans2 ) == 0) { passed = true; }
+		else { allPassed = false; };
+		System.out.println( "Double Parentheses Test passed? " + passed );
+		
+		// Nested Parentheses
+		passed = false;
+		String str3 = "-3x+x(3x-6+4(2x^2-5x-7)--5)-7x", ans3 = "8x^3–17x^2–39x";
+		origExpr = AI.prepareExpOrEq( str3 );
+		exprTerms = AI.simplifyExpr( str3 );
+		if ( AI.convertToStr( exprTerms ).compareTo( ans3 ) == 0) { passed = true; }
+		else { allPassed = false; };
+		System.out.println( "Nested Parentheses Test passed? " + passed );
+		
+		// Adjacent Parentheses
+		passed = false;
+		String str4 = "--3x+1x(3x-6+4)(2x^2-5x-7)-5-7x", ans4 = "6x^4–19x^3–11x^2+10x–5";
+		origExpr = AI.prepareExpOrEq( str4 );
+		exprTerms = AI.simplifyExpr( str4 );
+		if ( AI.convertToStr( exprTerms ).compareTo( ans4 ) == 0) { passed = true; }
+		else { allPassed = false; };
+		System.out.println( "Adjacent Parentheses Test passed? " + passed );
+		
+		// Double Parentheses with Adjacent
+		passed = false;
+		String str5 = "2 - 3x( 4x^2 - 5x ) - 5( x + 2 )( 6x - 9 )", ans5 = "-12x^3-15x^2-15x+92";
+		origExpr = AI.prepareExpOrEq( str5 );
+		exprTerms = AI.simplifyExpr( str5 );
+		if ( AI.convertToStr( exprTerms ).compareTo( ans5 ) == 0) { passed = true; }
+		else { allPassed = false; };
+		System.out.println( "Double Parentheses With Adjacent Test passed? " + passed );
+		
+		// Linear Equation
+		passed = false;
+		String str6 = "-3( 2x – 5 ) –7( x + 4 ) = 5( -3x – 2 ) + 9", ans6 = "3/7";
+		origExpr = AI.prepareExpOrEq( str6 );
+		exprTerms = AI.simplifyExpr( str6 );
+		if ( AI.convertToStr( exprTerms ).compareTo( ans6 ) == 0) { passed = true; }
+		else { allPassed = false; };
+		System.out.println( "Linear Equation Test passed? " + passed );
+		
+		// Quadratic Equation
+		passed = false;
+		String str7 = "3x( 2x – 5 ) – 7( x^2 + 4x - 3 ) = -5x( 3x – 2 ) + 9x^2", ans7 = "7.152,0.4195";
+		origExpr = AI.prepareExpOrEq( str7 );
+		exprTerms = AI.simplifyExpr( str7 );
+		if ( AI.convertToStr( exprTerms ).compareTo( ans7 ) == 0) { passed = true; }
+		else { allPassed = false; };
+		System.out.println( "Quadratic Equation Test passed? " + passed );
+		
+		System.out.println( "All Tests Passed? " + allPassed );
+		}	
+
+public static void main (String[] args) {
+	
+	AITest aitest = new AITest(); 
+}
+
+}
