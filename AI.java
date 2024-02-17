@@ -59,27 +59,39 @@ public class AI {
 	}
 
 	public static String elimOrAddSigns( String expression) {  // Eliminates initial plus signs or terminal signs in an expression and also adds 1's before variables
-	 int i, len = expression.length(), count = 0;
-	 char ch;
-	 if (expression.compareTo("+") == 0) { 
-		 expression = ""; 
-		 len = 0; 
-		 messages += "Error - incorrect expression: no algebra terms or numbers in expression/equation. "; 
-		 };
-	 while ((len > 1) && (count < len)) {
-		 // System.out.println( "len:  " + len + "  count:  " + count ); 
-		 len = expression.length(); 
-		 count+=2;
-		 if ((expression.charAt(len-1) == '+') || (expression.charAt(len-1) == '-')) expression = expression.substring(0,len-1);  
-		 if (expression.charAt(0) == '+')  expression = expression.substring(1); };
-		 ch = expression.charAt(0); 
-		 if (Character.isLetter(ch)) expression = "1" + expression;
-		 len = expression.length();
-		 for ( i = 0; i < len - 2; i++ ) {
-		 	ch = expression.charAt(i);
-		 	if ((( ch == '+') || (ch == '-')) || ((ch == '(') || (ch == ')')) )
-		 		if (Character.isLetter( expression.charAt(i+1) )) expression = expression.substring(0,i+1) + "1" + expression.substring(i+1); };
-		 return expression;
+		 int i, len = expression.length(), count = 0;
+		 char ch;
+		 
+		 if ( expression.length() != 0 ) {     //  Do nothing if expression is void.
+			 
+			 if ( expression.length() == 1 ) {   //  Check if single character expression has no number or variable
+				 ch = expression.charAt(0);
+				 if ( "=+-*/()[]{}^.–".indexOf(ch) != -1 ) {
+					expression = ""; 
+					messages += "Error - incorrect expression: no algebra terms or numbers in the expression. "; 
+				 	};
+			 	}	
+			 else {
+				 while ((len > 1) && (count < len)) {
+					 // System.out.println( "len:  " + len + "  count:  " + count ); 
+					 count+=2;				 
+					 
+					 // Remove any initial '+' sign or any '+' or '-' sign at end of expression.
+					 len = expression.length(); 
+					 if ((expression.charAt(len-1) == '+') || (expression.charAt(len-1) == '-')) expression = expression.substring(0,len-1);  
+					 if (expression.charAt(0) == '+')  expression = expression.substring(1); 
+					 
+					 // Add coefficient of 1 in front of any letter not already having a coefficient
+					 if (Character.isLetter( expression.charAt(0) )) expression = "1" + expression;			 
+					 for ( i = 0; i < expression.length() - 2; i++ ) {
+					 	ch = expression.charAt(i);
+					 	if ((( ch == '+') || (ch == '-')) || ((ch == '(') || (ch == ')')) )
+					 		if (Character.isLetter( expression.charAt(i+1) )) expression = expression.substring(0,i+1) + "1" + expression.substring(i+1); 
+					 	};
+				 	};
+				 }
+		 	}
+			return expression;
 	}
 	
 	public static String removeSpaces( String exp ) {
@@ -95,89 +107,100 @@ public class AI {
 		return exp;
 	}
 		
-	public static String prepareExpOrEq( String origText ) {  //  Prepares the string in various ways, detects unwanted characters, determines if equation, etc.
-		
-		String twoChar, tempString, leftSide, rightSide; int i, j, count, location, len; char ch; boolean ok;
-		
-		// Remove any spaces and switch upper to lower case letters
-		expression = removeSpaces( origText ); 
-		expression = expression.toLowerCase();
-		//  System.out.println( "After removing spaces and conversion to lower case: " + expression ); 
-		
-		// Detect characters other than numbers, letters, operation signs, equal signs, and parentheses or brackets.
-		len = expression.length(); 
-		
-		i = 0;
-		if (len > 0)
-			while ( i < len-1 ) {
-				ok = false; 
-				ch = expression.charAt(i);
-				if (Character.isDigit(ch)) ok = true;  
-				if (Character.isLetter(ch)) ok = true; 
-				if (( ch=='=') || ( ch== '+' )) ok = true;
-				if (( ch=='-') || ( ch=='*' )) ok = true;
-				if (( ch=='/') || ( ch=='(' )) ok = true;
-				if (( ch==')') || ( ch=='[')) ok = true;
-				if (( ch==']') || ( ch=='{')) ok = true;
-				if (( ch=='}') || ( ch=='^')) ok = true;
-				if (( ch=='.' ) || ( ch=='–')) ok = true;
-				if (!ok) { 
-					messages += "Error - expression has an unacceptable character: " + ch + " (character removed). "; 
-					expression = expression.substring(0,i) + expression.substring(i+1); 
-					len = expression.length();
-					};
-				i++; 
-			};
-					
-		// Change ++ to +, +- or -+ to -, and -- to +, if any of these are in the string
-		count = 0; 
-		tempString = expression;
-		while (count < expression.length()) {
-			for ( j = 0; j < expression.length() - 1; j++ ) {
-				twoChar = expression.substring(j,j+2); 
-				ch = '#';
-				if (twoChar.compareTo("++") == 0) 
-					{ ch = '+'; messages += "Double plus signs should be changed to + only. "; };
-				if ((twoChar.compareTo("+-") == 0) || (twoChar.compareTo("-+") == 0)) 
-					{ ch = '-'; messages += "+- or -+ should be changed to - only. "; };
-				if (twoChar.compareTo("--") == 0) 
-					{ ch = '+'; messages += "Double minus signs should be changed to a + sign. "; };
-				if (ch != '#') expression = expression.substring(0,j) + ch + expression.substring(j+2);
-			};	
-			count++; 
-			if (tempString.compareTo(expression) == 0) count = 999; 
-			tempString = expression; };
-			
-			// Eliminate initial plus signs or terminal signs in the whole expression or add 1's before variables if no coefficient
-			expression = elimOrAddSigns( expression );
-					
-		// Determine if there are equal signs (and if more than one) and if one, divide the string into left and right side expressions to prep each side
-		count = 0; 
-		location = 0; 
+	public static String prepareEquation( String expression ) {
+		int i, count = 0, location = 0; 
 		equation = false; 
-		leftSide = ""; 
-		rightSide = "";
+		String leftSide = "", rightSide = "";
+
+		// Determine if there are equal signs (and if more than one) and if one, set equation to true.
 		for (i=0; i < expression.length(); i++ )  { 
 			if ( expression.charAt(i) == '=' ) {
 				count++; location = i; };	
 				};
 		equation = (count == 1);
 		if (count > 1) { messages += "Error - incorrect expression: multiple equal signs. "; }  
+
+		// If equation, divide into two sides and eliminate initial plus signs or terminal signs in leftSide or rightSide expressions
 		if (equation) { 
 			leftSide = expression.substring(0,location); 
 			rightSide = expression.substring(location+1); 
-			}
-		if (equation) System.out.println("Left Side: " + leftSide + "  Right Side: " + rightSide );
-	
-		// If equation, eliminate initial plus signs or terminal signs in leftSide or rightSide expressions
-		if (equation) {
+			System.out.println("Left Side: " + leftSide + "  Right Side: " + rightSide );
 			leftSide = elimOrAddSigns( leftSide );  
 			rightSide = elimOrAddSigns( rightSide );
 			expression = leftSide + '=' + rightSide;
 			};
+		return expression;
+		}
+
+	public static String removeDoubleSigns( String expression ) {
+
+		boolean completed = false;
+		int j;
+		char ch;
+		String twoChar, tempString = expression;
+
+		// Change ++ to +, +- or -+ to -, and -- to +, if any of these are in the string
+		if ( expression.length() > 2 ) {
+			while ( !completed) {
+				for ( j = 0; j < expression.length() - 1; j++ ) {
+					twoChar = expression.substring(j,j+2); 
+					ch = '#';
+					if (twoChar.compareTo("++") == 0) 
+						{ ch = '+'; messages += "Double plus signs should be changed to + only. "; };
+					if ((twoChar.compareTo("+-") == 0) || (twoChar.compareTo("-+") == 0)) 
+						{ ch = '-'; messages += "+- or -+ should be changed to - only. "; };
+					if (twoChar.compareTo("--") == 0) 
+						{ ch = '+'; messages += "Double minus signs should be changed to a + sign. "; };
+					if (ch != '#')  { 
+						expression = expression.substring(0,j) + ch + expression.substring(j+2);
+						//j--;
+						}
+					};
+				if ( tempString.compareTo(expression) == 0 ) completed = true;
+				tempString = expression;
+				
+				};
+			}	
+		return expression;
+		}
 	
+	public static String prepareExpOrEq( String origText ) {  //  Prepares the string in various ways, detects unwanted characters, determines if equation, etc.
+		
+		int i; 
+		char ch; 
+		String expression;
+		boolean ok;
+		
+		// Remove any spaces and switch upper to lower case letters
+		expression = removeSpaces( origText ).toLowerCase();
+		
+		// Detect and remove characters other than numbers, letters, operation signs, equal signs, and parentheses or brackets.		
+		i = 0;
+		if ( expression.length() > 0 )
+			while ( i < expression.length()-1 ) {
+				ok = false; 
+				ch = expression.charAt(i);
+				if ((Character.isDigit(ch)) || (Character.isLetter(ch))) ok = true;  
+				if ("=+-*/()[]{}^.–".indexOf(ch) != -1) ok = true;
+				if (!ok) { 
+					messages += "Error - expression has an unacceptable character: " + ch + " (character removed). "; 
+					expression = expression.substring(0,i) + expression.substring(i+1); 
+					};
+				i++; 
+			};
+			
+		// Remove any double signs such as '--' or '+-'
+		expression = removeDoubleSigns( expression ); 
+		
+		// Eliminate initial plus signs or terminal signs in the whole expression or add 1's before variables if no coefficient
+		expression = elimOrAddSigns( expression );
+		
+		// If equation, prepare the two sides separately
+		expression = prepareEquation( expression ); 
+		
 		// System.out.println("Messages: " + messages);
 		return expression;
+		
 	} // end of prepareExpOrEq
 	
 	public static Term[] determineExpr( String origExpr, int beginPos, int endPos) {  // Analyzes the string character by character and converts to an array of Terms
@@ -322,8 +345,7 @@ public class AI {
 			numOfTerms = numUsedTerms( inputExpr ); 
 			};
 	
-			//  To look for a term that is "like" the outputExpr[i] term and combine it
-			
+			//  To look for a term that is "like" the outputExpr[i] term and combine it		
 			for ( j = 0; j < numOfTerms; j++ ) { 
 				
 				if (( outputExpr[i].variable == inputExpr[j].variable ) && ( outputExpr[i].expon == inputExpr[j].expon))
@@ -713,6 +735,7 @@ public class AI {
 		boolean noPar = false, parError = false, nestedPar = false, singlePar = false, doublePar = false, adjacentPar = false;
 	
 		Term[] result = initArrayOfTerms();
+		exp = prepareExpOrEq( exp ); 
 		
 		// Determine positions of parentheses (and if incorrectly ordered), and determine if no parentheses, single, double, or nested.
 		for ( i = 0; i < exp.length(); i++ ) {
@@ -737,29 +760,29 @@ public class AI {
 			else doublePar = true;  
 		if (posClosePar1 == posOpenPar2 - 1) { adjacentPar = true; doublePar = false; };
 		
-		// System.out.println( "NoPar: " + noPar + "  SinglePar: " + singlePar + "  DoublePar: " + doublePar + "  Nested: " + nestedPar + "  Adjacent: " + adjacentPar );
-		
+		//System.out.println( "PosOpenPar1: " + posOpenPar1 + "  PosClosePar1: " + posClosePar1 + "  PosOpenPar2:" + posOpenPar2 + "  PosClosePar2: " + posClosePar2 );
+		//System.out.println( "NoPar: " + noPar + "  SinglePar: " + singlePar + "  DoublePar: " + doublePar + "  Nested: " + nestedPar + "  Adjacent: " + adjacentPar );
+				
 		// Place a 1 in front of parentheses when parentheses are added or subtracted
 		if (posOpenPar1 != -1) {
 			i = exp.lastIndexOf('+',posOpenPar1); 
 			j = exp.lastIndexOf('-',posOpenPar1); 
-			k = posOpenPar1;
+			k = posOpenPar1-1;
 			if ((k==i) || (k==j)) { 
 				exp = exp.substring(0,k+1) + "1" + exp.substring(k+1);
 				posOpenPar1++;  
 				posClosePar1++;  
 				if (posOpenPar2 != -1) { posOpenPar2++; posClosePar2++; }
 				};
-		};
+			};
 		if (posOpenPar2 != -1) {
-			i = exp.lastIndexOf('+',posOpenPar2-1); 
-			j = exp.lastIndexOf('-',posOpenPar2-1); 
+			i = exp.lastIndexOf('+',posOpenPar2); 
+			j = exp.lastIndexOf('-',posOpenPar2); 
 			k = posOpenPar2-1;
 			if ((k==i) || (k==j)) { 
 				exp = exp.substring(0,k+1) + "1" + exp.substring(k+1);
 				posOpenPar2++; 
 				posClosePar2++; 
-				if ( posClosePar1 > posOpenPar2 ) posClosePar1++;  
 			};
 		};
 		System.out.println( "Expression: " + exp );
@@ -769,6 +792,7 @@ public class AI {
 		if (noPar) {  
 			System.out.println( "No Parentheses"); 
 			result = determineExpr( exp, 0, exp.length() ); 
+			
 			result = combineLikeTerms( result ); 
 			//System.out.print( "Expression after simplifying: " ); displayExpr( result ); 
 			};
@@ -877,72 +901,64 @@ public class AI {
 		 
 	}  // End of solveEq
 	
+	public static String roundDoubleTo3Places ( String[] calcAnswer ) {
+
+		double quadAns0 = Double.parseDouble(calcAnswer[0]), quadAns1 = Double.parseDouble(calcAnswer[1]);
+		quadAns0 = quadAns0*1000; quadAns1 = quadAns1*1000;
+		quadAns0 = Math.round(quadAns0); quadAns1 = Math.round(quadAns1);
+		quadAns0 = quadAns0/1000; quadAns1 = quadAns1/1000; 
+		String quadAnsStr0 = Double.toString( quadAns0 ); String quadAnsStr1 = Double.toString( quadAns1 ); 
+		String calcAnsQuad = quadAnsStr0 + "," + quadAnsStr1;
+		return calcAnsQuad;
+	}
+	
 	public static void AITest() {
 		
+		int i;
 		boolean passed, allPassed = true; 
-		String origExpr;
+		String origExpression, finalExpr;
+		String[] equationAnswer;
 		Term[] exprTerms = initArrayOfTerms();
 		String ANSI_RED = "\u001B[31m";
 		String ANSI_BLACK = "\u001B[30m";
 		
+		String[] testName = { "Multiple Signs/Extra Characters", "Combine Like Terms - No Parentheses", "Single Parentheses", "Double Parentheses", "Nested Parentheses",
+				"Adjacent Parentheses", "Linear Equation", "Quadratic Equation" };
+		String[] origExpr = { "-&-2+-@-3x-+(2x++6)-", "5x - 2x^2 + 4 - 7x + x^2 +1 - 6x^3", "3x+-5(3x-6+4x^2-5x-7)2-5-", "3x+1x(3x-6+4)+5-(2x^2-5x-7)-5--7x", 
+				"-3x+x(3x-6+4(2x^2-5x-7)--5)-7x", "--3x+1x(3x-6+4)(2x^2-5x-7)-5-7x", "-3( 2x - 5 ) -7( x + 4 ) = 5( -3x - 2 ) + 9",
+				"3x( 2x - 5 ) - 7( x^2 + 4x - 3 ) = -5x( 3x - 2 ) + 9x^2" };
+		String[] answer = { "1.0x^1-4.0", "-6.0x^3-1.0x^2-2.0x^1+5.0", "-40.0x^2+23.0x^1+125.0", "1.0x^2+13.0x^1+7.0", "8.0x^3-17.0x^2-39.0x^1",
+				"6.0x^4-19.0x^3-11.0x^2+10.0x^1-5.0", "6.0", "10.188,0.412"};
+		
 		System.out.println( " A I  T E S T : \n" );
 		
-		// Combine Like Terms - No Parentheses
-		System.out.println( "TEST: Combine Like Terms - No Parentheses" );
-		passed = false;
-		String str0 = "5x - 2x^2 + 4 - 7x + x^2 +1 - 6x^3", ans0 = "-6.0x^3-1.0x^2-2.0x^1+5.0"; 
-		origExpr = prepareExpOrEq(str0);
-		exprTerms = simplifyExpr( origExpr );
-		System.out.println( "Simplified expression: " + prepareExpOrEq(convertToStr( exprTerms )) + "   Answer: " + ans0 );
-		if ( prepareExpOrEq(convertToStr( exprTerms )).compareTo( ans0 ) == 0) { passed = true; }
-		else { allPassed = false; };
-		System.out.println( "Combining Like Terms - No Parentheses Test passed?  " + ANSI_RED + passed + ANSI_BLACK + "\n");
+		for ( i=0; i < testName.length; i++ ) {
 			
-		// Single Parentheses
-		System.out.println( "TEST: Single Parentheses" );
-		passed = false; 
-		String str1 = "3x+-5(3x-6+4x^2-5x-7)2-5-", ans1 = "-40.0x^2+23.0x^1+125.0"; 
-		origExpr = prepareExpOrEq(str1);
-		exprTerms = simplifyExpr( origExpr );
-		System.out.println( "Simplified expression: " + prepareExpOrEq(convertToStr( exprTerms )) + "   Answer: " + ans1 );
-		if ( prepareExpOrEq(convertToStr( exprTerms )).compareTo( ans1 ) == 0) { passed = true; }
-		else { allPassed = false; };
-		System.out.println( "Single Parentheses Test passed? " + ANSI_RED + passed + ANSI_BLACK + "\n");
+			System.out.println( "TEST: " + testName[i] );
+			passed = false;
+			origExpression = prepareExpOrEq( origExpr[i] ); 
+			if ( origExpression.indexOf('=') == -1 ) {
+				exprTerms = simplifyExpr( prepareExpOrEq( origExpr[i] ));
+				finalExpr = prepareExpOrEq(convertToStr( exprTerms ));
+				System.out.println( "Original expression: " +  origExpr[i] + "   Simplified expression: " + finalExpr + "   Correct Answer: " + answer[i] );
+				}
+			else {
+				equationAnswer = solveEq( simpEquation( origExpression) );
+				if ( testName[i] == "Quadratic Equation" ) {   // Handle the special case of a quadratic equation with two answers
+					finalExpr = roundDoubleTo3Places( equationAnswer );
+					}
+				else finalExpr = prepareExpOrEq( equationAnswer[0] );
+				 
+				System.out.println( "Original equation: " +  origExpr[i] + "   Calculated answer(s): " + finalExpr + "   Correct Answer: " + answer[i] );
+			}
+			
+			if ( finalExpr.compareTo( answer[i] ) == 0) { passed = true; }
+				else { allPassed = false; };
+			System.out.println( "TEST: " + testName[i] + "  Passed = " + ANSI_RED + passed + ANSI_BLACK + "\n");
 		
-		// Double Parentheses
-		System.out.println( "TEST: Double Parentheses" );
-		passed = false;
-		String str2 = "3x+1x(3x-6+4)+5-(2x^2-5x-7)-5--7x", ans2 = "1.0x^2+13.0x^1+7.0";
-		origExpr = prepareExpOrEq(str2);
-		exprTerms = simplifyExpr( origExpr );
-		System.out.println( "Simplified expression: " + prepareExpOrEq(convertToStr( exprTerms )) + "   Answer: " + ans2 );
-		if ( prepareExpOrEq(convertToStr( exprTerms )).compareTo( ans2 ) == 0) { passed = true; }
-		else { allPassed = false; };
-		System.out.println( "Double Parentheses Test passed? " + ANSI_RED + passed + ANSI_BLACK + "\n");
-		
-		// Nested Parentheses
-		System.out.println( "TEST: Nested Parentheses" );
-		passed = false;
-		String str3 = "-3x+x(3x-6+4(2x^2-5x-7)--5)-7x", ans3 = "8.0x^3-17.0x^2-39.0x^1";
-		origExpr = AI.prepareExpOrEq( str3 );
-		exprTerms = AI.simplifyExpr( origExpr );
-		System.out.println( "Simplified expression: " + prepareExpOrEq(convertToStr( exprTerms )) + "   Answer: " + ans3 );
-		if ( prepareExpOrEq(convertToStr( exprTerms )).compareTo( ans3 ) == 0) { passed = true; }
-		else { allPassed = false; };
-		System.out.println( "Nested Parentheses Test passed? " + ANSI_RED + passed + ANSI_BLACK + "\n");	
-		
-		// Adjacent Parentheses
-		System.out.println( "TEST: Adjacent Parentheses" );
-		passed = false;
-		String str4 = "--3x+1x(3x-6+4)(2x^2-5x-7)-5-7x", ans4 = "6.0x^4-19.0x^3-11.0x^2+10.0x^1-5.0";
-		origExpr = AI.prepareExpOrEq( str4 );			 		
-		exprTerms = AI.simplifyExpr( origExpr );
-		System.out.println( "Simplified expression: " + prepareExpOrEq(convertToStr( exprTerms )) + "   Answer: " + ans4 );
-		if ( prepareExpOrEq(convertToStr( exprTerms )).compareTo( ans4 ) == 0) { passed = true; }
-		else { allPassed = false; };
-		System.out.println( "Adjacent Parentheses Test passed? " + ANSI_RED + passed + ANSI_BLACK + "\n");
-		 
-	    /*
+			};
+			
+		/*    // The code was not designed to handle this test since can only handle two sets of parentheses
 		// Double Parentheses with Adjacent
 		passed = false;
 		String str5 = "2 - 3x( 4x^2 - 5x ) - 5( x + 2 )( 6x - 9 )", ans5 = "-12.0x^3-15.0x^2-15.0x^1+92.0";
@@ -953,35 +969,8 @@ public class AI {
 		else { allPassed = false; };
 		System.out.println( "Double Parentheses With Adjacent Test passed? " + passed + "\n" );
 		*/
-		
-		// Linear Equation
-		System.out.println( "TEST: Solving a Linear Equation" );passed = false;
-		String str6 = "-3( 2x - 5 ) -7( x + 4 ) = 5( -3x - 2 ) + 9", ans6 = "6.0";
-		origExpr = simpEquation( str6 );
-		String[] calcAnswer = solveEq( origExpr ); 
-		System.out.println( "Simplified equation: " + origExpr + "   Calculated answer: " + calcAnswer[0] + "   Desired Answer: " + ans6 );
-		if ( calcAnswer[0].compareTo( ans6 ) == 0) { passed = true; }
-		else { allPassed = false; };
-		System.out.println( "Linear Equation Test passed? " + ANSI_RED + passed + ANSI_BLACK + "\n" ); 
-		
-		// Quadratic Equation
-		System.out.println( "TEST: Solving a Quadratic Equation" );
-		passed = false;
-		String str7 = "3x( 2x - 5 ) - 7( x^2 + 4x - 3 ) = -5x( 3x - 2 ) + 9x^2", ans7 = "10.188,0.412";
-		origExpr = simpEquation( str7 );
-		String[] calcAnswerQuad = solveEq( origExpr );
-		double quadAns0 = Double.parseDouble(calcAnswerQuad[0]), quadAns1 = Double.parseDouble(calcAnswerQuad[1]);
-		quadAns0 = quadAns0*1000; quadAns1 = quadAns1*1000;
-		quadAns0 = Math.round(quadAns0); quadAns1 = Math.round(quadAns1);
-		quadAns0 = quadAns0/1000; quadAns1 = quadAns1/1000; 
-		String quadAnsStr0 = Double.toString( quadAns0 ); String quadAnsStr1 = Double.toString( quadAns1 ); 
-		String calcAnsQuad = quadAnsStr0 + "," + quadAnsStr1;
-		System.out.println( "Simplified equation: " + origExpr + "  Calculated answers: " + calcAnsQuad + "  Desired Answers: " + ans7 );
-		if ( calcAnsQuad.compareTo( ans7 ) == 0) { passed = true; }
-		else { allPassed = false; };
-		System.out.println( "Quadratic Equation Test passed? " + ANSI_RED + passed + ANSI_BLACK + "\n" );
-		
-		System.out.println( "All Tests Passed? " + ANSI_RED + allPassed + ANSI_BLACK + "\n\n");
+			
+		System.out.println( "All Tests Passed = " + ANSI_RED + allPassed + ANSI_BLACK + "\n\n");
 		
 		}	
 	
