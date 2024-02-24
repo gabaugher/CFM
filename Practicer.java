@@ -239,7 +239,7 @@ public Practicer( int studID ) {
 					stAnsStr = AI.convertToStr( AI.determineExpr( stAnsStr, 0, stAnsStr.length())); 
 					stAnsStr = AI.prepareExpOrEq( stAnsStr );
 					fullExpr = AI.prepareExpOrEq( fullExpr );
-					correctAns = AI.prepareExpOrEq( AI.convertToStr( AI.simpSinglePar( fullExpr ) ) );
+					correctAns = AI.prepareExpOrEq( AI.convertToStr( AI.simpSingleParExpr( fullExpr ) ) );
 					System.out.println( "\nYour answer: " + stAnsStr + "   Correct Distributed Expression: " + correctAns );
 					if (stAnsStr.compareTo(correctAns) == 0) { score++; System.out.println( "     CORRECT !" ); }
 						else { System.out.println( "     Not Correct." ); };
@@ -263,9 +263,7 @@ public Practicer( int studID ) {
 		int type[] = { 0, 0, 0, 0 };
 		int coef[] = new int[4]; for (i=0; i<4; i++) coef[i] = 1;  
 		String prompt = "", fullExpr = "", stAnsStr = "", correctAns = "";
-		boolean okEntry = false, exiting = false;
-		Term[] express1 = AI.initArrayOfTerms( );  
-		Term[] express2 = express1;   
+		boolean okEntry = false, exiting = false;  
 	
 		// Display of current recorded score
 		System.out.println( "\nYour current recorded score for Simplifying Expressions is " + getScore( enrollmentID, "SimpMax" ));
@@ -298,8 +296,8 @@ public Practicer( int studID ) {
 					stAnsStr = AI.convertToStr( AI.determineExpr( stAnsStr, 0, stAnsStr.length())); 
 					stAnsStr = AI.prepareExpOrEq( stAnsStr );
 					fullExpr = AI.prepareExpOrEq( fullExpr ); 
-					if (stAns == 2) fullExpr = AI.convertToStr( AI.simpSinglePar( fullExpr ));
-					if (stAns == 3) fullExpr = AI.convertToStr( AI.simpDoublePar( fullExpr ));
+					if (stAns == 2) fullExpr = AI.convertToStr( AI.simpSingleParExpr( fullExpr ));
+					if (stAns == 3) fullExpr = AI.convertToStr( AI.simpDoubleParExpr( fullExpr ));
 					if (stAns == 4) fullExpr = AI.convertToStr( AI.simpNestParExpr( fullExpr )); 
 					correctAns = AI.prepareExpOrEq( AI.convertToStr( AI.combineLikeTerms( AI.determineExpr( fullExpr, 0, fullExpr.length() ) ) ) );
 					System.out.println( "\nYour answer: " + stAnsStr + "   Correct Distributed Expression: " + correctAns );
