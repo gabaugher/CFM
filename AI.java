@@ -54,7 +54,7 @@ public class AI {
 
 	public static int numUsedTerms( Term[] terms ) {   //  Used several places to determine the number of used terms in an expression (array of terms)
 		int i, num = 0;
-		for (i=0; i<9; i++) { if (terms[i].coeff != 0) num += 1; };
+		for (i=0; i<9; i++) { if (terms[i].coeff != 0) num++; };
 		return num;
 	}
 
@@ -164,33 +164,38 @@ public class AI {
 		return expression;
 		}
 	
-	public static String removeOtherCharacters( String exp ) {
+	public static String removeOtherCharacters( String expression ) {
 		int i = 0; 
 		char ch; 		
 		boolean ok;
 		
-		if ( exp.length() > 0 )
-			while ( i < exp.length()-1 ) {
+		if ( expression.length() > 0 )
+			while ( i < expression.length()-1 ) {
 				ok = false; 
-				ch = exp.charAt(i);
+				ch = expression.charAt(i);
 				if ((Character.isDigit(ch)) || (Character.isLetter(ch))) ok = true;  
 				if ("=+-*/()[]{}^.–".indexOf(ch) != -1) ok = true;
 				if (!ok) { 
 					System.out.println( "Error - expression has an unacceptable character: " + ch + " (character removed). " ); 
-					exp = exp.substring(0,i) + exp.substring(i+1); 
+					expression = expression.substring(0,i) + expression.substring(i+1); 
 					};
 				i++; 
 			};
 	
-		return exp;
+		return expression;
+	}
+	
+	public static String removeTermsWithZeroCoefficients( String expression ) {
+		
+		//  This needs to be written or the code written and added into combineLikeTerms() or determineExpr() 
+		
+		return expression;
 	}
 	
 	public static String prepareExpOrEq( String origText ) {  //  Prepares the string in various ways, detects unwanted characters, determines if equation, etc.
 		
-		String expression;
-		
 		// Remove any spaces and switch upper to lower case letters
-		expression = removeSpaces( origText ).toLowerCase();
+		String expression = removeSpaces( origText ).toLowerCase();
 		
 		// Detect and remove characters other than numbers, letters, operation signs, equal signs, and parentheses or brackets.		
 		expression = removeOtherCharacters( expression );
@@ -319,7 +324,7 @@ public class AI {
 		
 		int i, j, highExpon, highIndex = 0, origNumOfTerms, numOfTerms; 
 		double sumOfCoeffs;
-		char highVar;
+		//char highVar;
 		Term[] outputExpr = initArrayOfTerms(); 
 		origNumOfTerms = numUsedTerms( inputExpr ); 
 		numOfTerms = origNumOfTerms;
@@ -331,14 +336,14 @@ public class AI {
 					
 			// set the high exponent term to be the first term
 			highExpon = inputExpr[0].expon; 
-			highVar = inputExpr[0].variable; 
+			//highVar = inputExpr[0].variable; 
 			highIndex = 0;
 			if (numOfTerms > 0) {
 				for ( j = 1; j < numOfTerms; j++ ) {
 					if (highExpon < inputExpr[j].expon ) { // add a condition of the variables being the same
 						 highExpon = inputExpr[j].getExpon(); 
 						 highIndex = j;  
-						 highVar = inputExpr[j].getVar(); 
+						 //highVar = inputExpr[j].getVar(); 
 						 };
 					};
 	
@@ -375,7 +380,7 @@ public class AI {
 	
 	public static Term[] simpSingleParExpr( String expression )  {  // Handles when the expression has one set of parentheses
 		
-		int i, j, k, l, m = 0, n = 0, posOpenPar1, posClosePar1;
+		int i, j, k, l, m = 0, n = 0;
 		String newExpr = "", beginStr = "", endStr = ""; 
 		boolean parError = false, endMultiplier = false;  
 		Term[] expressionList = initArrayOfTerms(); 
@@ -384,35 +389,35 @@ public class AI {
 		Term[] resultExpr = initArrayOfTerms(); 
 		
 		// Determine positions of open and close parentheses
-		posOpenPar1 = expression.indexOf( '(' ); 
-		posClosePar1 = expression.indexOf( ')' );
+		ParPos pp = new ParPos(); 
+		pp.determParPos(expression); 
 		
 		// Process parentheses except for any term after the parentheses
-		k = posOpenPar1; 
+		k = pp.Open1; 
 		i = expression.lastIndexOf('+', k); 
 		j = expression.lastIndexOf('-', k);
 		l = expression.lastIndexOf('–', k);
 		if ((j!=-1) || (l!=-1)) j = Math.max(j, l); 
 		if ((i!=-1)||(j!=-1)) { 
 			k = Math.max(i, j); 
-			multiplierTerm = determineExpr( expression, k, posOpenPar1); 
-			}
+			multiplierTerm = determineExpr( expression, k, pp.Open1); }
 		else { 
-			multiplierTerm = determineExpr( expression, 0, posOpenPar1);
-			k = 0; 
-			};
+			multiplierTerm = determineExpr( expression, 0, pp.Open1);
+			k = 0; };
 			
 		if (k != 0) beginStr = expression.substring(0,k) + "+";
-		nestExpr = determineExpr( expression, posOpenPar1+1, posClosePar1 );
+		
+		nestExpr = determineExpr( expression, pp.Open1+1, pp.Close1 );
+		
 		if ((numUsedTerms(multiplierTerm) == 1) && (multiplierTerm[0].coeff != 0)) 
 			resultExpr = distributeMonomial( multiplierTerm, nestExpr);
 		
-		// Determine any final term to distribute and distribute it
-		if (posClosePar1 < expression.length()-1) {
-			i = expression.indexOf('+',posClosePar1); 
-			j = expression.indexOf('-',posClosePar1); 
-			l = expression.lastIndexOf('–',posClosePar1);
-			m = posClosePar1;
+		// Determine if any final term to distribute and distribute it; determine any trailing added part of expression
+		if (pp.Close1 < expression.length()-1) {
+			i = expression.indexOf('+',pp.Close1); 
+			j = expression.indexOf('-',pp.Close1); 
+			l = expression.lastIndexOf('–',pp.Close1);
+			m = pp.Close1;
 			if (i!=-1) m = i;
 			if ((j!=-1) || (l!=-1)) j = Math.max(j, l); 
 			if (j!=-1) { 
@@ -420,13 +425,13 @@ public class AI {
 				if (i!=-1) m = Math.min( m, n ); 
 					else m = j; };
 			if (( i == -1 ) && ( j == -1 )) { 
-				multiplierTerm = determineExpr( expression, posClosePar1+1, expression.length() ); 
+				multiplierTerm = determineExpr( expression, pp.Close1+1, expression.length() ); 
 				endMultiplier = true; 
 				endStr = ""; 
 				}
-				else { 	multiplierTerm = determineExpr( expression, posClosePar1+1, m); 
+				else { 	multiplierTerm = determineExpr( expression, pp.Close1+1, m); 
 				endMultiplier = true;
-				if (m>posClosePar1) endStr = "+" + expression.substring( m ); 
+				if (m>pp.Close1) endStr = "+" + expression.substring( m ); 
 					else endStr = "+" + expression.substring(m+1); };
 				if (endMultiplier) if ((numUsedTerms(multiplierTerm) == 1) && (multiplierTerm[0].coeff != 0))
 					{ resultExpr = distributeMonomial( multiplierTerm, resultExpr); };
@@ -499,6 +504,12 @@ public class AI {
 				
 			return pp;
 			}
+			
+		public void setOpen1( int position ) { Open1 = position; };
+		public void setOpen2( int position ) { Open2 = position; };
+		public void setClose1( int position ) { Close1 = position; };
+		public void setClose2( int position ) { Close2 = position; };
+				
 		}
 	
 	public static Term[] simpDoubleParExpr( String origExpression )  {  //  Handles when the expression has two sets of parentheses by use of simpSinglePar twice
@@ -524,39 +535,36 @@ public class AI {
 		return expression;
 	}  //  End of simpDoublePar
 	
-	public static Term[] simpNestParExpr( String exp )  {  //  Handles expressions with one set of parentheses inside another set of parentheses
+	public static Term[] simpNestParExpr( String expression )  {  //  Handles expressions with one set of parentheses inside another set of parentheses
 		
-		int posOpenPar1 = -1, posClosePar2 = -1;
 		String newExpr = ""; 
-		Term[] expression = initArrayOfTerms();
-		Term[] nestExpr = expression; 
+		Term[] expressionTerms = initArrayOfTerms();
+		Term[] nestExpr = expressionTerms; 
 			
 		ParPos pp = new ParPos();  
-		pp.determParPos(exp); 
-		posOpenPar1 = pp.Open1;
-		posClosePar2 = pp.Close2;
+		pp.determParPos(expression); 
 						
 		// Simplify inner nested parentheses
-		newExpr = exp.substring( posOpenPar1+1, posClosePar2);
+		newExpr = expression.substring( pp.Open1+1, pp.Close2);
 		newExpr = prepareExpOrEq( newExpr );
 		nestExpr = simpSingleParExpr( newExpr );
 		
 		// Build new string expression after combining strings
 		newExpr = convertToStr( nestExpr );
-		exp = exp.substring(0,posOpenPar1) + "(" + newExpr + ")" + exp.substring( posClosePar2+1 );
-		exp = prepareExpOrEq( exp );
+		expression = expression.substring(0,pp.Open1) + "(" + newExpr + ")" + expression.substring( pp.Close2+1 );
+		expression = prepareExpOrEq( expression );
 		
 		// Simplify complete expression string
-		expression = simpSingleParExpr( exp );
+		expressionTerms = simpSingleParExpr( expression );
 		if (pp.parError) System.out.println( "Incorrect entry. Try again." );
 		
-		return expression;
+		return expressionTerms;
 		
 	}  // End of simpNestParExpr
 	
 	public static Term[] simpAdjacParExpr( String exp )  {  //  Handles expressions with two parentheses adjacent to each other (where they must be multiplied)
 	
-		int i, j, k = 0, len, endLen, posOpenPar1 = -1, posOpenPar2 = -1, posClosePar1 = -1, posClosePar2 = -1, numOfTerms1, numOfTerms2;
+		int i, j, k = 0, len, endLen, numOfTerms1, numOfTerms2;
 		double multiplier = 1; 
 		String beginStr = "", endStr = "";
 		boolean multiplyingDone = false, backDistribute = false; char ch;
@@ -569,12 +577,10 @@ public class AI {
 		
 		// Determine positions of openings and closings of parentheses	
 		ParPos pp = new ParPos(); pp.determParPos(exp); 
-		posOpenPar1 = pp.Open1; posOpenPar2 = pp.Open2;
-		posClosePar1 = pp.Close1; posClosePar2 = pp.Close2;
 		
 		//  Handle any part of the expression before the first parentheses
-		if (posOpenPar1 != 0) {
-			beginStr = exp.substring( 0, posOpenPar1);
+		if (pp.Open1 != 0) {
+			beginStr = exp.substring( 0, pp.Open1);
 			
 			//  If just one character before opening parentheses, set multiplier to -1 if a negative sign or to a digit if a digit
 			if (beginStr.length() == 1) {
@@ -587,7 +593,7 @@ public class AI {
 	
 			//  If multiple characters before opening parentheses, determine if any are multipliers to the parentheses
 			if (beginStr.length() > 1) {
-				k = posOpenPar1; 
+				k = pp.Open1; 
 				i = exp.lastIndexOf( '+', k ); 
 				j = exp.lastIndexOf( '-', k ); 
 				if (i>j) k = i; 
@@ -596,15 +602,15 @@ public class AI {
 					multiplierExpr = determineExpr( beginStr, k, beginStr.length() ); 
 					beginStr = beginStr.substring(0, k); }
 					else { 
-						multiplierExpr = determineExpr( beginStr, 0, posOpenPar1 ); 
+						multiplierExpr = determineExpr( beginStr, 0, pp.Open1 ); 
 						beginStr = ""; 
 					}; 
 				};
 			};
 	
 		//  Handle any part of the expression after the parentheses
-		if (posClosePar2 < len-1) {
-			endStr = exp.substring( posClosePar2+1, len); 
+		if (pp.Close2 < len-1) {
+			endStr = exp.substring( pp.Close2+1, len); 
 			endLen = endStr.length();
 			if (endLen == 1) {	
 				ch = endStr.charAt(0);
@@ -643,10 +649,10 @@ public class AI {
 		  };
 		  
 		//  Perform the multiplication of the two expressions in parentheses
-		firstExpr = determineExpr( exp, posOpenPar1, posClosePar1 ); 
+		firstExpr = determineExpr( exp, pp.Open1, pp.Close1 ); 
 		firstExpr = combineLikeTerms( firstExpr ); 
 		numOfTerms1 = numUsedTerms( firstExpr );  
-		secondExpr = determineExpr( exp, posOpenPar2, posClosePar2 ); 
+		secondExpr = determineExpr( exp, pp.Open2, pp.Close2 ); 
 		secondExpr = combineLikeTerms( secondExpr ); 
 		numOfTerms2 = numUsedTerms( secondExpr );
 		if (numOfTerms1 == 1) {
@@ -666,7 +672,7 @@ public class AI {
 			multiplyingDone = true; };
 			
 		//  Distribute any multiplier to the result of above parentheses multiplication, and add in beginStr and endExpr
-		if (posOpenPar1 != 0) { resultExpr = distributeMonomial( multiplierExpr, resultExpr ); };
+		if (pp.Open1 != 0) { resultExpr = distributeMonomial( multiplierExpr, resultExpr ); };
 		if (backDistribute) { resultExpr = distributeMonomial( endMultiplierTerm, resultExpr ); };
 		if (beginStr.length() > 0) { 
 			tempExpr = determineExpr( beginStr, 0, beginStr.length() ); 
@@ -695,81 +701,94 @@ public class AI {
 		return outputExpr;
 	}
 	
-	public static Term[] simplifyExpr( String exp ) {  //  The main component to distinguish the type of expression and send it to a particular method to simplify it
+	public static String add1inFrontOfParentheses( String expression, ParPos pp ) {
+		int i, j, k;
 		
-		int i, j, k, posOpenPar1 = -1, posOpenPar2 = -1, posClosePar1 = -1, posClosePar2 = -1; 
-		boolean noPar = false, parError = false, nestedPar = false, singlePar = false, doublePar = false, adjacentPar = false;
+		if (pp.Open1 != -1) {
+			i = expression.lastIndexOf('+', pp.Open1); 
+			j = expression.lastIndexOf('-', pp.Open1); 
+			k = pp.Open1-1;
+			if ((k==i) || (k==j)) { 
+				expression = expression.substring(0,k+1) + "1" + expression.substring(k+1);
+				pp.setOpen1( pp.Open1 + 1 ); 
+				pp.setClose1( pp.Close1 + 1 ); 
+				if (pp.Open2 != -1) { pp.setOpen2( pp.Open2 + 1 ); pp.setClose2( pp.Close2 + 1 ); }
+				};
+			};
+		if (pp.Open2 != -1) {
+			i = expression.lastIndexOf('+',pp.Open2); 
+			j = expression.lastIndexOf('-',pp.Open2); 
+			k = pp.Open2-1;
+			if ((k==i) || (k==j)) { 
+				expression = expression.substring(0,k+1) + "1" + expression.substring(k+1);
+				pp.setOpen2( pp.Open2 + 1 ); 
+				pp.setClose2( pp.Close2 + 1 ); 
+				};
+			};
+		return expression;
+		}
+
+	public static Term[] simplifyExpr( String expression ) {  //  The main component to distinguish the type of expression and send it to a particular method to simplify it
+		
+		String type = ""; 
+		boolean parError = false;
 	
 		Term[] result = initArrayOfTerms();
-		exp = prepareExpOrEq( exp ); 
+		expression = prepareExpOrEq( expression ); 
 		
-		// Determine positions of parentheses (and if incorrectly ordered)
-		ParPos pp = new ParPos(); pp.determParPos(exp); 
-		posOpenPar1 = pp.Open1; posOpenPar2 = pp.Open2;
-		posClosePar1 = pp.Close1; posClosePar2 = pp.Close2;
+		// Determine positions of parentheses (and if correctly ordered or has error)
+		ParPos pp = new ParPos(); 
+		pp.determParPos(expression); 
 		parError = pp.parError;
 		
 		// Determine the type of expression: if no parentheses, single, double, or nested.
-		if ((exp.indexOf('(')==-1) && (exp.indexOf(')')==-1)) noPar = true;
-			else if ((posOpenPar2 == -1) && (posClosePar2 == -1)) singlePar = true;
-		if (( posOpenPar2 != -1) && (posClosePar1 != -1))
-			if (posOpenPar2 < posClosePar1) nestedPar = true;
-			else doublePar = true;  
-		if (posClosePar1 == posOpenPar2 - 1) { adjacentPar = true; doublePar = false; };
+		if ((expression.indexOf('(')==-1) && (expression.indexOf(')')==-1)) type = "noPar";
+			else if ((pp.Open2 == -1) && (pp.Close2 == -1)) type = "singlePar";
+		if (( pp.Open2 != -1) && (pp.Close1 != -1))
+			if (pp.Open2 < pp.Close1) type = "nestedPar";
+				else type = "doublePar";  
+		if (pp.Close1 == pp.Open2 - 1) { type = "adjacentPar"; };
 			
-		// Place a 1 in front of parentheses when parentheses are added or subtracted
-		if (posOpenPar1 != -1) {
-			i = exp.lastIndexOf('+',posOpenPar1); 
-			j = exp.lastIndexOf('-',posOpenPar1); 
-			k = posOpenPar1-1;
-			if ((k==i) || (k==j)) { 
-				exp = exp.substring(0,k+1) + "1" + exp.substring(k+1);
-				posOpenPar1++;  
-				posClosePar1++;  
-				if (posOpenPar2 != -1) { posOpenPar2++; posClosePar2++; }
-				};
-			};
-		if (posOpenPar2 != -1) {
-			i = exp.lastIndexOf('+',posOpenPar2); 
-			j = exp.lastIndexOf('-',posOpenPar2); 
-			k = posOpenPar2-1;
-			if ((k==i) || (k==j)) { 
-				exp = exp.substring(0,k+1) + "1" + exp.substring(k+1);
-				posOpenPar2++; 
-				posClosePar2++; 
-			};
-		};
-		System.out.println( "Expression: " + exp );
+		// Place a 1 in front of parentheses when parentheses are added or subtracted	
+		expression = add1inFrontOfParentheses( expression, pp ); 
+		
+		System.out.println( "Expression: " + expression );
 		System.out.print( "   Type: " );
 		
 		// Pass the expression to the appropriate method to simplify it
-		if (noPar) {  
-			System.out.println( "No Parentheses"); 
-			result = determineExpr( exp, 0, exp.length() ); 		
-			result = combineLikeTerms( result ); 
+		switch( type ) { 
+			case "noPar": {
+				System.out.println( "No Parentheses"); 
+				result = determineExpr( expression, 0, expression.length() ); 
+				result = combineLikeTerms( result ); };
+				break;
+			case "singlePar": { 
+				System.out.println( "Single Parentheses"); 
+				result = simpSingleParExpr( expression ); };
+				break;
+			case "doublePar": { 
+				System.out.println( "Double Parentheses"); 
+				result = simpDoubleParExpr( expression ); };
+				break;
+			case "nestedPar": { 
+				System.out.println( "Nested Parentheses"); 
+				result = simpNestParExpr( expression ); };
+				break;
+			case "adjacentPar": { 
+				System.out.println( "Adjacent Parentheses"); 
+				result = simpAdjacParExpr( expression ); };
+				break;
+			default:
+				System.out.println( "No discernable type" ); 
 			};
-		if (singlePar) { 
-			System.out.println( "Single Parentheses"); 
-			result = simpSingleParExpr( exp ); 
-			};
-		if (doublePar) { 
-			System.out.println( "Double Parentheses"); 
-			result = simpDoubleParExpr( exp ); 
-			};
-		if (nestedPar) { 
-			System.out.println( "Nested Parentheses"); 
-			result = simpNestParExpr( exp ); 
-			};
-		if (adjacentPar) { 
-			System.out.println( "Adjacent Parentheses"); 
-			result = simpAdjacParExpr( exp ); 
-			};
+			
 		result = combineLikeTerms( result );
 		result = roundCoeffs( result );
 		
-		System.out.print( "\nFinal Simplified Expression: "); displayExpr( result );
-		if (parError) System.out.println( "Incorrect entry. Try again." );  
+		if (!parError) { System.out.print( "\nFinal Simplified Expression: "); displayExpr( result ); }
+			else { System.out.println( "Incorrect entry. Try again." ); };  
 		return result;
+		
 	}   // End of simplifyExpr
 	
 	public static double evaluateExpr( Term[] expression, double value ) {  //  Given a value for the variable, this method evaluates a whole expression
@@ -784,7 +803,7 @@ public class AI {
 		return answer;
 	}  // End of evaluateExpr
 	
-	public static String simplifyEquation( String eqStr ) {  // Converts left & right sides to expression, combines on left side, converts equation back to string
+	public static String simplifyEquation( String equationStr ) {  // Converts left & right sides to expression, combines on left side, converts equation back to string
 		int location;
 		String leftSide = "", rightSide = "", simplifiedEquation = "";
 		Term[] leftExpr = initArrayOfTerms();
@@ -792,10 +811,10 @@ public class AI {
 		Term[] combinedExpr = leftExpr; 
 		Term[] negOne = determineExpr( "-1", 0, 2);
 		
-		eqStr = removeSpaces( eqStr ); 
-		location = eqStr.indexOf('=');
-		leftSide = eqStr.substring(0,location); 
-		rightSide = eqStr.substring(location+1);  
+		equationStr = removeSpaces( equationStr ); 
+		location = equationStr.indexOf('=');
+		leftSide = equationStr.substring(0,location); 
+		rightSide = equationStr.substring(location+1);  
 		//System.out.println( "left: " + leftSide + "  right: " + rightSide);
 	
 		leftSide = prepareExpOrEq( leftSide );
@@ -815,13 +834,13 @@ public class AI {
 		return simplifiedEquation;
 	}  // End of simpEquation
 	
-	public static String[] solveEquation( String equation ) {  // Once equation is simplified, this method solves it and returns answers in an array of type String
+	public static String[] solveEquation( String equation ) {  // Once equation is simplified, this method solves it and returns answerwers in an array of type String
 		// If equation has degree < 3, equation is solved using -b/a (linear) or by quadratic formula (quadratic)
 		int i, location, degree, numOfTerms;
 		double[] a = new double[9];
 		Term[] expression = initArrayOfTerms();
-		String[] ans = new String[2]; 
-		for (i=0; i<2; i++) { ans[i] = ""; };
+		String[] answer = new String[2]; 
+		for (i=0; i<2; i++) { answer[i] = ""; };
 		
 		location = equation.indexOf('=');
 		expression = determineExpr( equation, 0, location);
@@ -830,9 +849,9 @@ public class AI {
 		for (i=0; i<9; i++) { 
 			if (expression[i].expon > degree) degree = expression[i].expon; };
 		if (degree == 0) { 
-			if (expression[0].coeff == 0) ans[0] = "All real numbers"; 
-				else ans[0] = "No solutions"; };
-		if (degree == 1) { ans[0] = String.valueOf( -1*expression[1].coeff / expression[0].coeff ); };
+			if (expression[0].coeff == 0) answer[0] = "All real numbers"; 
+				else answer[0] = "No solutions"; };
+		if (degree == 1) { answer[0] = String.valueOf( -1*expression[1].coeff / expression[0].coeff ); };
 		if (degree == 2) { 
 			for ( i=0; i < numOfTerms; i++) {
 				if (expression[i].expon == 2) a[2] = expression[i].coeff;
@@ -840,24 +859,23 @@ public class AI {
 				if (expression[i].expon == 0) a[0] = expression[i].coeff; 
 				};
 			if (a[1]*a[1]-4*a[2]*a[0] >= 0) {
-				ans[0]=String.valueOf((-1*a[1]+Math.sqrt(a[1]*a[1]-4*a[2]*a[0]))/(2*a[2])); 
-				ans[1]=String.valueOf((-1*a[1]-Math.sqrt(a[1]*a[1]-4*a[2]*a[0]))/(2*a[2])); }
-				else ans[0] = "No solution in the real numbers.";
+				answer[0]=String.valueOf((-1*a[1]+Math.sqrt(a[1]*a[1]-4*a[2]*a[0]))/(2*a[2])); 
+				answer[1]=String.valueOf((-1*a[1]-Math.sqrt(a[1]*a[1]-4*a[2]*a[0]))/(2*a[2])); }
+				else answer[0] = "No solution in the real numbers.";
 				};
-		if (degree > 2) ans[0] = "This program only solves equations up to degree 2.";
-		return ans;
+		if (degree > 2) answer[0] = "This program currently only solves equations up to degree 2.";
+		return answer;
 		 
 	}  // End of solveEq
 	
-	public static String roundDoubleTo3Places ( String[] calcAnswer ) {
+	public static String round2LineAnswer ( String[] twoLineAnswer ) {
 
-		double quadAns0 = Double.parseDouble(calcAnswer[0]), quadAns1 = Double.parseDouble(calcAnswer[1]);
-		quadAns0 = quadAns0*1000; quadAns1 = quadAns1*1000;
-		quadAns0 = Math.round(quadAns0); quadAns1 = Math.round(quadAns1);
-		quadAns0 = quadAns0/1000; quadAns1 = quadAns1/1000; 
-		String quadAnsStr0 = Double.toString( quadAns0 ); String quadAnsStr1 = Double.toString( quadAns1 ); 
-		String calcAnsQuad = quadAnsStr0 + "," + quadAnsStr1;
-		return calcAnsQuad;
+		double line1ofAnswer = Double.parseDouble(twoLineAnswer[0]), line2ofAnswer = Double.parseDouble(twoLineAnswer[1]);
+		line1ofAnswer = line1ofAnswer*1000; line2ofAnswer = line2ofAnswer*1000;
+		line1ofAnswer = Math.round(line1ofAnswer); line2ofAnswer = Math.round(line2ofAnswer);
+		line1ofAnswer = line1ofAnswer/1000; line2ofAnswer = line2ofAnswer/1000; 
+		String result = Double.toString( line1ofAnswer ) + "," + Double.toString( line2ofAnswer ); 
+		return result;
 	}
 	
 	public static void AITest() {
@@ -870,12 +888,12 @@ public class AI {
 		String ANSI_RED = "\u001B[31m";
 		String ANSI_BLACK = "\u001B[30m";
 		
-		String[] testName = { "Multiple Signs/Extra Characters", "Combine Like Terms - No Parentheses", "Single Parentheses", "Double Parentheses", "Nested Parentheses",
+		String[] testName = { "Multiple Signs/Extra Characters", "Multiple Variables", "Combine Like Terms - No Parentheses", "Single Parentheses", "Double Parentheses", "Nested Parentheses",
 				"Adjacent Parentheses", "Linear Equation", "Quadratic Equation" };
-		String[] origExpr = { "-&-2+-@-3x-+(2x++6)-", "5x - 2x^2 + 4 - 7x + x^2 +1 - 6x^3", "3x+-5(3x-6+4x^2-5x-7)2-5-", "3x+1x(3x-6+4)+5-(2x^2-5x-7)-5--7x", 
+		String[] origExpr = { "-&-2+-@-3x-+(2x++6)-", "4x - 2y + 6 - x + y^2 + y -3", "5x - 2x^2 + 4 - 7x + x^2 +1 - 6x^3", "3x+-5(3x-6+4x^2-5x-7)2-5-", "3x+1x(3x-6+4)+5-(2x^2-5x-7)-5--7x", 
 				"-3x+x(3x-6+4(2x^2-5x-7)--5)-7x", "--3x+1x(3x-6+4)(2x^2-5x-7)-5-7x", "-3( 2x - 5 ) -7( x + 4 ) = 5( -3x - 2 ) + 9",
 				"3x( 2x - 5 ) - 7( x^2 + 4x - 3 ) = -5x( 3x - 2 ) + 9x^2" };
-		String[] answer = { "1.0x^1-4.0", "-6.0x^3-1.0x^2-2.0x^1+5.0", "-40.0x^2+23.0x^1+125.0", "1.0x^2+13.0x^1+7.0", "8.0x^3-17.0x^2-39.0x^1",
+		String[] answer = { "1.0x^1-4.0", "1.0y^2+3.0x^1-1.0y^1+3.0", "-6.0x^3-1.0x^2-2.0x^1+5.0", "-40.0x^2+23.0x^1+125.0", "1.0x^2+13.0x^1+7.0", "8.0x^3-17.0x^2-39.0x^1",
 				"6.0x^4-19.0x^3-11.0x^2+10.0x^1-5.0", "6.0", "10.188,0.412"};
 		
 		System.out.println( " A I  T E S T : \n" );
@@ -893,7 +911,7 @@ public class AI {
 			else {
 				equationAnswer = solveEquation( simplifyEquation( origExpression) );
 				if ( testName[i] == "Quadratic Equation" ) {   // Handle the special case of a quadratic equation with two answers
-					finalExpr = roundDoubleTo3Places( equationAnswer );
+					finalExpr = round2LineAnswer( equationAnswer );
 					}
 				else finalExpr = prepareExpOrEq( equationAnswer[0] );
 				 
@@ -952,4 +970,3 @@ public class AI {
 		}  
 
 }
-	
