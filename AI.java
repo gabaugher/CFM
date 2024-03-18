@@ -217,49 +217,82 @@ public class AI {
 	public static Term[] determineExpr( String origExpr, int beginPos, int endPos) {  // Analyzes the string character by character and converts to an array of Terms
 		boolean nowExpon = false, prevIsDigit = false, prevIsLetter = false;          // (assuming no parentheses in the expression)
 		int i, index, signMultiplier = 1, numOfTerm = 0;
-		char ch; String numStr = ""; 
+		char ch; 
+		String numStr = ""; 
 		double number = 0;
 		int pos[] = new int[9]; 
 		double coeff[] = new double[9]; 
-		char variable[] = new char[9]; int expon[] = new int[9];
+		char variable[] = new char[9]; 
+		int expon[] = new int[9];
 		for ( index = 0; index < 9; index++ ) {
-			pos[index] = 0; 
 			coeff[index] = 0; 
 			variable[index] = ' '; 
 			expon[index] = 0; };
 		Term[] exprAsArrayOfTerms = initArrayOfTerms(); 
 		
-		i = beginPos; 
+		i = beginPos;
+
 		ch = origExpr.charAt(i);  
-		if ((ch == '+') || ( ch == '-')) 
-			{ if (ch == '-') signMultiplier = -1; i++; };
+		if ((ch == '+') || ( ch == '-')) {
+			if (ch == '-') signMultiplier = -1; 
+			i++; };
+			
 		while ( i < endPos ) {
 			ch = origExpr.charAt(i);
+			
 			if (!(Character.isDigit(ch) || (ch == '.')) && prevIsDigit) {
 				number = Double.parseDouble(numStr);  
-				if (nowExpon) { expon[numOfTerm] = (int) number; nowExpon = false; } 
-					else { coeff[numOfTerm] = signMultiplier*number; };  
-				numStr = ""; prevIsDigit = false; };
-				if (Character.isDigit(ch) || (ch == '.')) {
-					numStr += ch; prevIsDigit = true; };
-					if (Character.isLetter(ch)) { expon[numOfTerm] = 1;
-					if (prevIsLetter) messages += "Error: adjacent letters found. "; 
-						else { variable[numOfTerm] = ch;  prevIsLetter = true; }; }
-					else { prevIsLetter = false; };
-					if (ch == '^') { if (nowExpon) messages += "Error: multiple adjacent exponent symbols (^) found. ";    
-						if (!(prevIsLetter)) { messages += "Error: exponent not preceeded by a variable. "; };
-						nowExpon = true; };
-					if ((ch == '+') || (ch == '-')) {
-						numOfTerm++; pos[numOfTerm] = i; 
-						if (ch == '+') signMultiplier = 1; 
-						if (ch == '-') signMultiplier = -1; };
-						if ((i == endPos-1) && prevIsDigit) { number = Double.parseDouble(numStr);  
-						if (nowExpon) { expon[numOfTerm] = (int) number; } 
-							else { coeff[numOfTerm] = signMultiplier*number; variable[numOfTerm] = ' '; expon[numOfTerm] = 0;  }; }
-						i++; }
-	
-		for (index = 0; index <= numOfTerm; index++ ) { exprAsArrayOfTerms[index].setCoeff(coeff[index]);
-		exprAsArrayOfTerms[index].setVar(variable[index]); exprAsArrayOfTerms[index].setExpon(expon[index]); };
+				if (nowExpon) { 
+					expon[numOfTerm] = (int) number; 
+					nowExpon = false; } 
+				else { coeff[numOfTerm] = signMultiplier*number; };  
+				numStr = ""; prevIsDigit = false; 
+				};
+				
+			if (Character.isDigit(ch) || (ch == '.')) {
+				numStr += ch; prevIsDigit = true; 
+				};
+				
+			if (Character.isLetter(ch)) { 
+				expon[numOfTerm] = 1;
+				if (prevIsLetter) messages += "Error: adjacent letters found. "; 
+				else { 
+					variable[numOfTerm] = ch;  
+					prevIsLetter = true; 
+					}; 
+				}
+			else { prevIsLetter = false; };
+			
+			if (ch == '^') { 
+				if (nowExpon) messages += "Error: multiple adjacent exponent symbols (^) found. ";    
+				if (!(prevIsLetter)) messages += "Error: exponent not preceeded by a variable. "; 			
+				nowExpon = true; 
+				};
+				
+			if ((ch == '+') || (ch == '-')) {
+				numOfTerm++; 
+				pos[numOfTerm] = i; 
+				if (ch == '+') signMultiplier = 1; 
+				if (ch == '-') signMultiplier = -1; 
+				};
+			
+			if ((i == endPos-1) && prevIsDigit) { 
+				number = Double.parseDouble(numStr);  
+				if (nowExpon) expon[numOfTerm] = (int) number;  
+				else { 
+					coeff[numOfTerm] = signMultiplier*number; 
+					variable[numOfTerm] = ' '; 
+					expon[numOfTerm] = 0;  
+					};
+				}
+			i++; 
+			}
+				
+		for (index = 0; index <= numOfTerm; index++ ) { 
+			exprAsArrayOfTerms[index].setCoeff(coeff[index]);
+			exprAsArrayOfTerms[index].setVar(variable[index]); 
+			exprAsArrayOfTerms[index].setExpon(expon[index]); 
+			};
 		
 		return exprAsArrayOfTerms;
 	}   // end of determineExpr
@@ -760,6 +793,7 @@ public class AI {
 			case "noPar": {
 				System.out.println( "No Parentheses"); 
 				result = determineExpr( expression, 0, expression.length() ); 
+				System.out.println( "Expression after determineExpr(): " + convertToStr( result ) );
 				result = combineLikeTerms( result ); };
 				break;
 			case "singlePar": { 
@@ -888,12 +922,12 @@ public class AI {
 		String ANSI_RED = "\u001B[31m";
 		String ANSI_BLACK = "\u001B[30m";
 		
-		String[] testName = { "Multiple Signs/Extra Characters", "Multiple Variables", "Combine Like Terms - No Parentheses", "Single Parentheses", "Double Parentheses", "Nested Parentheses",
+		String[] testName = { "Multiple Signs/Extra Characters", "Multiple Variables", "Expression with 0 Coefficients", "Combine Like Terms - No Parentheses", "Single Parentheses", "Double Parentheses", "Nested Parentheses",
 				"Adjacent Parentheses", "Linear Equation", "Quadratic Equation" };
-		String[] origExpr = { "-&-2+-@-3x-+(2x++6)-", "4x - 2y + 6 - x + y^2 + y -3", "5x - 2x^2 + 4 - 7x + x^2 +1 - 6x^3", "3x+-5(3x-6+4x^2-5x-7)2-5-", "3x+1x(3x-6+4)+5-(2x^2-5x-7)-5--7x", 
+		String[] origExpr = { "-&-2+-@-3x-+(2x++6)-", "4x - 2y + 6 - x + y^2 + y -3","8x - 5 + 0x + 2x^2 - 0 - 7x - 0x^2 +9", "5x - 2x^2 + 4 - 7x + x^2 +1 - 6x^3", "3x+-5(3x-6+4x^2-5x-7)2-5-", "3x+1x(3x-6+4)+5-(2x^2-5x-7)-5--7x", 
 				"-3x+x(3x-6+4(2x^2-5x-7)--5)-7x", "--3x+1x(3x-6+4)(2x^2-5x-7)-5-7x", "-3( 2x - 5 ) -7( x + 4 ) = 5( -3x - 2 ) + 9",
 				"3x( 2x - 5 ) - 7( x^2 + 4x - 3 ) = -5x( 3x - 2 ) + 9x^2" };
-		String[] answer = { "1.0x^1-4.0", "1.0y^2+3.0x^1-1.0y^1+3.0", "-6.0x^3-1.0x^2-2.0x^1+5.0", "-40.0x^2+23.0x^1+125.0", "1.0x^2+13.0x^1+7.0", "8.0x^3-17.0x^2-39.0x^1",
+		String[] answer = { "1.0x^1-4.0", "1.0y^2+3.0x^1-1.0y^1+3.0", "2.0x^2+1.0x+4.0", "-6.0x^3-1.0x^2-2.0x^1+5.0", "-40.0x^2+23.0x^1+125.0", "1.0x^2+13.0x^1+7.0", "8.0x^3-17.0x^2-39.0x^1",
 				"6.0x^4-19.0x^3-11.0x^2+10.0x^1-5.0", "6.0", "10.188,0.412"};
 		
 		System.out.println( " A I  T E S T : \n" );
