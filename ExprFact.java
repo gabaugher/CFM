@@ -11,9 +11,8 @@ public interface ExprFact {  // Abstract factory interface
 	public static void EFTestExprFact() {		
 		int i;
 		boolean passed = false, allPassed = true; 
-		String finalExpr = null;
 		String ANSI_RED = "\u001B[31m";
-		String ANSI_BLACK = "\u001B[30m";	
+		String ANSI_BLACK = "\u001B[30m";
 		String[] testName = { "Multiple Signs/Extra Characters", "Multiple Variables", "Expression with 0 Coefficients", "Combine Like Terms - No Parentheses", "Single Parentheses", "Double Parentheses", "Nested Parentheses",
 				"Adjacent Parentheses", "Linear Equation", "Quadratic Equation" };
 		String[] origExpr = { "-&-2+-@-3x-+(2x++6)-", "4x - 2y + 6 - x + y^2 + y -3","8x - 5 + 0x + 2x^2 - 0 - 7x - 0x^2 +9", "5x - 2x^2 + 4 - 7x + x^2 +1 - 6x^3", "3x+-5(3x-6+4x^2-5x-7)2-5-", "3x+1x(3x-6+4)+5-(2x^2-5x-7)-5--7x", 
@@ -24,32 +23,42 @@ public interface ExprFact {  // Abstract factory interface
 		
 		System.out.println( "        E F  T E S T  : \n" );
 		
-		for ( i=0; i < testName.length; i++ ) {			
-			System.out.println( "TEST: " + testName[i] );
+		ExprFact exprFact = ExprFactSelector.getFactory( origExpr[0] );  
+		Expression exp = exprFact.createExpr( PrepExpr.prepareExpOrEq( origExpr[0] ) ); 
+		System.out.println( "exp.terms = " + convertTermsToStr( exp ) ); 
+		passed = passTest( exp, testName[0], answer[0], 0);
+		if (!passed) allPassed = false; 
+		
+		for ( i = 1; i < testName.length; i++ ) {			
 			passed = false;
-			
-			ExpressionFactory exprFact = new ExpressionFactory();  			
-			Expression exp = exprFact.createExpression( PrepExpr.prepareExpOrEq( origExpr[i] ) ); 
-			
-			if (exp.originalType == "equation") finalExpr = exp.answer;
-			else finalExpr = convertTermsToStr( exp );
-			
-			System.out.println( "Original expression: " +  origExpr[i] + "   Simplified expression: " + finalExpr + "   Correct Answer: " + answer[i] );
-										
-			if ( finalExpr.compareTo( answer[i] ) == 0) { passed = true; }
-				else { allPassed = false; };
-			System.out.println( "TEST: " + testName[i] + "  Passed = " + ANSI_RED + passed + ANSI_BLACK + "\n");
-		}
-			
+			exprFact = ExprFactSelector.getFactory( origExpr[i] );  
+			exp = exprFact.createExpr( PrepExpr.prepareExpOrEq( origExpr[i] ) ); 	
+			passed = passTest( exp, testName[i], answer[i], i);		
+			if (!passed) allPassed = false;
+			}		
 		System.out.println( "All Tests Passed = " + ANSI_RED + allPassed + ANSI_BLACK + "\n\n");
 				
-		}	
+	};
+	
+	public static boolean passTest( Expression exp, String testName, String answer, int i ) {
+		boolean passed = false;
+		String finalExpr; 
+		String ANSI_RED = "\u001B[31m";
+		String ANSI_BLACK = "\u001B[30m";	
+		
+		System.out.println( "TEST: " + testName );
+						
+		if (exp.originalType == "equation") finalExpr = exp.answer;
+		else finalExpr = convertTermsToStr( exp );
+		if ( finalExpr.compareTo( answer ) == 0) passed = true;
+		
+		System.out.println( "Original expression: " +  convertTermsToStr( exp ) + "   Simplified expression: " + finalExpr + "   Correct Answer: " + answer );								
+		System.out.println( "TEST: " + testName + "  Passed = " + ANSI_RED + passed + ANSI_BLACK + "\n" );	
+		return passed; 
+		}
 	
 	public static String convertTermsToStr( Expression expression ) {
-		String result = "";
-		
-		result = PrepExpr.prepareExpOrEq( AI.convertToStr( expression.terms )); 
-		
+		String result = PrepExpr.prepareExpOrEq( AI.convertToStr( expression.terms )); 
 		return result;
 		}
 	
