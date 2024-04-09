@@ -17,9 +17,10 @@ public class equatExprFact implements ExprFact {
 		Expression expression = new Expression(); 
 		expression.string = preparedString; 
 		System.out.println( "PreparedStr: " + preparedString );
+		expression.originalType = "equation"; 
+		expression.terms = terms; 
 		expression.answer = AI.solveEquation( equationStr );
-		System.out.println( "Answer: " + expression.answer ); 
-		
+		System.out.println( "Answer: " + expression.answer ); 		
 		return expression; 
 	};
 
